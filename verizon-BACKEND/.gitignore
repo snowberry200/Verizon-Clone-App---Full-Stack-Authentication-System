@@ -1,0 +1,81 @@
+# Backend - Spring Boot (your current file)
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+# 🔥 ADD THESE FOR FLUTTER FRONTEND 🔥
+
+### Flutter/Dart ###
+**/frontend/.dart_tool/
+**/frontend/.flutter-plugins
+**/frontend/.flutter-plugins-dependencies
+**/frontend/.packages
+**/frontend/.pub-cache/
+**/frontend/.pub/
+**/frontend/build/
+**/frontend/ios/.generated/
+**/frontend/ios/Flutter/Flutter.framework
+**/frontend/ios/Flutter/Flutter.podspec
+**/frontend/ios/Pods/
+**/frontend/ios/.symlinks/
+**/frontend/ios/Flutter/.last_build_id
+**/frontend/ios/Flutter/Generated.xcconfig
+**/frontend/ios/Flutter/ephemeral/
+**/frontend/ios/Runner/GeneratedPluginRegistrant.*
+
+### Android Studio for Flutter ###
+**/frontend/android/.gradle/
+**/frontend/android/app/build/
+**/frontend/android/.idea/
+**/frontend/android/local.properties
+**/frontend/android/*.iml
+**/frontend/android/app/*.iml
+**/frontend/.idea/
+
+### Other Flutter platforms ###
+**/frontend/linux/flutter/ephemeral/
+**/frontend/linux/flutter/generated_plugin_registrant.cc
+**/frontend/linux/flutter/generated_plugins.cmake
+**/frontend/macos/Flutter/ephemeral/
+**/frontend/macos/Runner/GeneratedPluginRegistrant.*
+**/frontend/web/*.map
+**/frontend/web/*.js.map
+**/frontend/windows/flutter/ephemeral/
+
+### macOS ###
+**/frontend/macos/Flutter/GeneratedPluginRegistrant.swift
+**/frontend/macos/Flutter/ephemeral/
+
+### General OS files ###
+.DS_Store
+Thumbs.db
