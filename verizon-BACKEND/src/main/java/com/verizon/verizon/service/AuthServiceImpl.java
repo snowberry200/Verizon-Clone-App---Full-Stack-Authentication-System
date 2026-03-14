@@ -28,9 +28,6 @@ public class AuthServiceImpl implements AuthService {
     private final UserSecurityQuestionRepository userSecurityQuestionRepository;
     private final JwtTokenProviderImpl jwtTokenProviderImpl;
 
-    // NO DTO fields here!
-    // NO Builder inner class here!
-
     public AuthServiceImpl(
             PasswordEncoder passwordEncoder,
             UserRepository userRepository,

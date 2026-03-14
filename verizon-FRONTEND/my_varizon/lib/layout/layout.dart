@@ -32,7 +32,7 @@ class _LayOutWidgetState extends State<LayOutWidget> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => AuthBloc(database: AuthService()),
+      create: (context) => AuthBloc(authService: AuthService()),
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           if (constraints.maxWidth >= desktopScreenSize) {

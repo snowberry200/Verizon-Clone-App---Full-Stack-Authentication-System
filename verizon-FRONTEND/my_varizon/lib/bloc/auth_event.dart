@@ -32,11 +32,15 @@ class SignUpEvent extends AuthEvent {
   final String name;
   final String email;
   final String password;
+  final String securityQuestion;
+  final String securityAnswer;
 
   const SignUpEvent({
     required this.name,
     required this.password,
     required this.email,
+    required this.securityQuestion,
+    required this.securityAnswer,
   });
 
   @override

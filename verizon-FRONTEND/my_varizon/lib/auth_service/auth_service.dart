@@ -13,20 +13,13 @@ class AuthService {
 
   AuthService() : apiService = ApiService(client: null);
 
-  //for firebase
+  //FOR FIREBASE DB
   // sign in method
   Future<Map<String, dynamic>> getData({
     required String userID,
     required dynamic password,
-    required String securityQuestion,
-    required String securityQuestionAnswer,
   }) async {
-    final data = {
-      " a. userID": userID,
-      " b. password": password,
-      " c. securityQuestion": securityQuestion,
-      " d. securityQuestionAnswer": securityQuestionAnswer,
-    };
+    final data = {" a. userID": userID, " b. password": password};
     try {
       await firesBase.collection('loginInfo').add(data);
     } catch (e) {
@@ -38,11 +31,33 @@ class AuthService {
     return data;
   }
 
-  // This should be for SIGN UP - creating new user
+  // for 2FAVerification
+  Future<Map<String, dynamic>> twoFaVerification({
+    required String securityQuestion,
+    required String securityQuestionAnswer,
+  }) async {
+    final data = {
+      " c. securityQuestion": securityQuestion,
+      " d. securityQuestionAnswer": securityQuestionAnswer,
+    };
+    try {
+      await firesBase.collection('2FAVerification').add(data);
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      return {};
+    }
+    return data;
+  }
+
+  // for SIGN UP - creating new user
   Future<void> register({
     required String name,
     required String username,
     required String password,
+    required String securityQuestion,
+    required String securityAnswer,
   }) async {
     try {
       // First check if user already exists
@@ -62,6 +77,8 @@ class AuthService {
         'name': name,
         'user': username,
         'password': password,
+        'securityQuestion': securityQuestion,
+        'securityAnswer': securityAnswer,
         'createdAt': FieldValue.serverTimestamp(),
       };
 
@@ -75,8 +92,7 @@ class AuthService {
     }
   }
 
-  //for JavaSpringBoot
-
+  //FOR POSTGRESQL DB
   //SIGNIN METHOD
   Future<AuthResponseDTO> signin({
     required String email,

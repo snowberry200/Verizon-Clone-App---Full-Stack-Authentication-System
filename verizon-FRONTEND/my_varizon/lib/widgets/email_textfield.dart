@@ -27,7 +27,6 @@ class _EmailTextFieldState extends State<EmailTextField> {
       showCursor: true,
       autofocus: false,
       textAlign: TextAlign.start,
-      strutStyle: const StrutStyle(),
       style: const TextStyle(),
       textInputAction: TextInputAction.done,
       key: ValueKey('email'),
@@ -37,15 +36,30 @@ class _EmailTextFieldState extends State<EmailTextField> {
               !EmailValidator.validate(ifEmail!)
                   ? 'Enter a valid User ID'
                   : null,
+
       decoration: InputDecoration(
-        fillColor: Colors.transparent,
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.blue),
+          borderRadius: BorderRadius.circular(0),
+          borderSide: const BorderSide(
+            color: CupertinoColors.systemBlue,
+            width: 1,
+          ),
         ),
-        focusColor: Colors.red,
-        contentPadding: const EdgeInsets.only(left: 10, right: 10),
-        border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(0)),
+        enabledBorder: OutlineInputBorder(
+          borderSide: const BorderSide(
+            color: CupertinoColors.systemGrey,
+            width: 1,
+          ),
+        ),
+        labelStyle: const TextStyle(
+          color: CupertinoColors.systemBlue,
+          fontSize: 14,
+        ),
+        border: OutlineInputBorder(
+          borderSide: const BorderSide(
+            color: CupertinoColors.systemGrey,
+            width: 1,
+          ),
         ),
       ),
     );

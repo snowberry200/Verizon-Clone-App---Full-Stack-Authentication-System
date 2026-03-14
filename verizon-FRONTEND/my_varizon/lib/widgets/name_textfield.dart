@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class NameTextFormWidget extends StatefulWidget {
@@ -24,9 +25,31 @@ class NameTextFormWidgetState extends State<NameTextFormWidget> {
       textAlign: TextAlign.start,
       controller: widget.nameController,
       decoration: InputDecoration(
-        contentPadding: const EdgeInsets.only(left: 10, right: 10),
-        border: OutlineInputBorder(borderSide: const BorderSide()),
-        labelStyle: const TextStyle(fontSize: 16),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(0),
+          borderSide: const BorderSide(
+            color: CupertinoColors.systemBlue,
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(0),
+          borderSide: const BorderSide(
+            color: CupertinoColors.systemGrey,
+            width: 1,
+          ),
+        ),
+        labelStyle: const TextStyle(
+          color: CupertinoColors.systemBlue,
+          fontSize: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(0),
+          borderSide: const BorderSide(
+            color: CupertinoColors.systemGrey,
+            width: 1,
+          ),
+        ),
       ),
       keyboardType: TextInputType.name,
       autofillHints: const [AutofillHints.name],

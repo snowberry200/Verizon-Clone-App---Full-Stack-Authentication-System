@@ -12,7 +12,6 @@ class SignInButton extends StatelessWidget {
     required this.passwordController,
     required this.context,
     required this.submit,
-    //required this.nameController,
   });
 
   //final TextEditingController nameController;

@@ -13,6 +13,8 @@ import 'package:my_verizon/question_widget.dart/question_page.dart';
 import 'package:my_verizon/widgets/email_textfield.dart';
 import 'package:my_verizon/widgets/name_textfield.dart';
 import 'package:my_verizon/widgets/password_text_fields.dart';
+import 'package:my_verizon/widgets/security_answer_form_field.dart';
+import 'package:my_verizon/widgets/security_question_form_field.dart';
 import 'package:my_verizon/widgets/sign_in_button.dart';
 import 'package:my_verizon/widgets/text_group.dart';
 import 'package:my_verizon/widgets/text_widget.dart';
@@ -31,6 +33,19 @@ class _FormWidgetState extends State<FormWidget> {
   late TextEditingController loginController;
   late TextEditingController passwordController;
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController questionController = TextEditingController();
+  final TextEditingController securityAnswerController =
+      TextEditingController();
+  String selectedSecurityQuestion = '';
+
+  List<String> securityQuestions = [
+    'What was the first live concert you attended?',
+    'Where did you and your spouse first meet?',
+    'What was your favorite place to visit as a child?',
+    'What was the first name of your first roommate?',
+    'What is the name of a memorable place you visited?',
+    'What was your favorite restaurant in college?',
+  ];
 
   bool _canShowSnackBar = true;
   bool isSignUpMode = false;
@@ -65,11 +80,18 @@ class _FormWidgetState extends State<FormWidget> {
       final email = loginController.text.trim();
       final name = nameController.text.trim();
       final password = passwordController.text.trim();
+      final secretAnswer = securityAnswerController.text.trim();
 
       if (state.isSignUpMode) {
         // Sign up logic
         context.read<AuthBloc>().add(
-          SignUpEvent(email: email, name: name, password: password),
+          SignUpEvent(
+            email: email,
+            name: name,
+            password: password,
+            securityQuestion: selectedSecurityQuestion,
+            securityAnswer: secretAnswer,
+          ),
         );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -222,6 +244,7 @@ class _FormWidgetState extends State<FormWidget> {
                   LayOutWidget.isMobile(context)
                       ? CrossAxisAlignment.start
                       : CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 LayOutWidget.isMobile(context)
                     ? SizedBox(height: 0)
@@ -279,7 +302,21 @@ class _FormWidgetState extends State<FormWidget> {
 
                 if (state.isSignUpMode) ...[
                   NameTextFormWidget(nameController: nameController),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
+                  SecurityQuestionFormField(
+                    items: securityQuestions,
+                    onQuestionSelected: (value) {
+                      setState(() {
+                        selectedSecurityQuestion = value;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 10),
+                  SecurityAnswerFormField(
+                    securityAnswerController: securityAnswerController,
+                  ),
+                  const SizedBox(height: 10),
                 ],
                 SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
                 CheckboxWidget(),
@@ -319,16 +356,34 @@ class _FormWidgetState extends State<FormWidget> {
                               loginController: loginController,
                               passwordController: passwordController,
                               context: context,
-                              //nameController: nameController,
                               submit: () => handleSubmit(state),
                             ),
                   ),
                 ),
-
-                SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
+                state.isSignUpMode
+                    ? SizedBox.shrink()
+                    : SizedBox(
+                      height: LayOutWidget.isMobile(context) ? 10 : 20,
+                    ),
                 Align(
                   alignment: Alignment.topLeft,
-                  child: TextGroupWidget(swap: swap),
+                  child:
+                      state.isSignUpMode
+                          ? TextButton(
+                            onPressed: swap,
+                            child: Text(
+                              state.isSignUpMode
+                                  ? ' "i already have an account" ...Sign In'
+                                  : 'Register',
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.normal,
+                                fontSize: 17,
+                              ),
+                            ),
+                          )
+                          : TextGroupWidget(swap: swap),
                 ),
               ],
             ),

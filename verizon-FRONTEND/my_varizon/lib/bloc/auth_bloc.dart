@@ -6,8 +6,8 @@ import 'package:my_verizon/bloc/auth_state.dart';
 import 'package:my_verizon/auth_service/auth_service.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final AuthService database;
-  AuthBloc({required this.database}) : super(InitialAuthState()) {
+  final AuthService authService;
+  AuthBloc({required this.authService}) : super(InitialAuthState()) {
     on<SignInEvent>(_onSignInEvent);
     on<QuestionAnswerEvent>(_onQuestionAnswerEvent);
     on<CheckboxEvent>(_onCheckboxEvent);
@@ -31,11 +31,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       await Future.delayed(const Duration(seconds: 3));
 
-      final result = await database.getData(
+      final result = await authService.getData(
         userID: event.email,
         password: event.password,
-        securityQuestion: '',
-        securityQuestionAnswer: '',
       );
 
       if (kDebugMode) {
@@ -81,9 +79,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await Future.delayed(const Duration(seconds: 3));
 
     try {
-      final result = await database.getData(
-        userID: '',
-        password: '',
+      final result = await authService.twoFaVerification(
         securityQuestion: event.question,
         securityQuestionAnswer: event.answer,
       );
@@ -111,10 +107,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoadingState());
 
     try {
-      await database.register(
+      await authService.register(
         name: event.name,
         username: event.email,
         password: event.password,
+        securityQuestion: event.securityQuestion,
+        securityAnswer: event.securityAnswer,
       );
 
       emit(
@@ -123,6 +121,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           name: event.name,
           password: event.password,
           email: event.email,
+          securityQuestion: event.securityQuestion,
+          securityAnswer: event.securityAnswer,
         ),
       );
     } catch (e) {

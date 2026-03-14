@@ -146,7 +146,7 @@ class ResponseBuilder {
     required bool isActive,
     DateTime? lastLogin,
   }) {
-    // SIGNIN RESPONSE OBJECT FOR AUTHSERVICE USE
+    // SIGNIN RESPONSE OBJECT FOR BUSINESS LOGIC (BLoC architecture)
     return ResponseBuilder(
       accessToken: accessToken,
       message: message,
@@ -164,10 +164,10 @@ class ResponseBuilder {
     DateTime? createdAt,
   }) {
     if (userSecurityDataResponseDTO == null) {
-      throw Exception('UserSecurityDataResponseDTO is required for sign up');
+      throw Exception('User Security Data is required for sign up');
     }
 
-    // SIGNUP RESPONSE OBJECT FOR AUTHSERVICE USE
+    // SIGNUP RESPONSE OBJECT FOR BUSINESS LOGIC (BLoC architecture)
     return ResponseBuilder(accessToken: accessToken, message: message)
         .withUser(user)
         .withIsActive(isActive)
@@ -192,7 +192,7 @@ class ResponseBuilder {
         'UserSecurityDataResponseDTO is required for 2FA verification',
       );
     }
-    // 2FA VERIFICATION RESPONSE OBJECT FOR AUTHSERVICE USE
+    // 2FA VERIFICATION RESPONSE OBJECT FOR BUSINESS LOGIC (BLoC architecture)
     return ResponseBuilder(accessToken: accessToken, message: message)
         .withUser(user)
         .withIsActive(false)

@@ -73,17 +73,27 @@ class SignedUpState extends AuthState {
   final String email;
   final dynamic password;
   final String? message;
-
-  factory SignedUpState.fromMessage(String message) {
-    return SignedUpState(message, name: '', password: null, email: '');
-  }
+  final String securityQuestion;
+  final String securityAnswer;
 
   const SignedUpState(
     this.message, {
+    required this.securityQuestion,
+    required this.securityAnswer,
     required this.name,
     required this.password,
     required this.email,
   });
+  factory SignedUpState.fromMessage(String message) {
+    return SignedUpState(
+      message,
+      name: '',
+      password: null,
+      email: '',
+      securityQuestion: "",
+      securityAnswer: "",
+    );
+  }
 
   @override
   List<Object?> get props => [email, name, password];

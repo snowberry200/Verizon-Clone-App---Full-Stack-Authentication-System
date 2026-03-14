@@ -1,4 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -149,9 +148,7 @@ class _AnswerFormFieldWidgetState extends State<AnswerFormFieldWidget> {
                         await followLink!();
                       }
                       FutureBuilder(
-                        future: AuthService().getData(
-                          userID: widget.userId,
-                          password: widget.password.toString(),
+                        future: AuthService().twoFaVerification(
                           securityQuestion: widget.securityQuestion,
                           securityQuestionAnswer: securityQuestionAnswer.text,
                         ),
