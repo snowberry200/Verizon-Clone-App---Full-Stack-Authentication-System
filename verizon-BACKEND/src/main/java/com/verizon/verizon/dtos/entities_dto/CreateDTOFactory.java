@@ -1,6 +1,8 @@
 package com.verizon.verizon.dtos.entities_dto;
 
 
+import com.verizon.verizon.userstatuses.ActiveStatus;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class CreateDTOFactory {
                                         UserSecurityQuestionDTO userSecurityQuestionDTO) {
         UserDTO newUserDTO = new UserDTO.Builder(id,
                 name, email, accessToken)
-                .isActive(isActive)
+                .status(new ActiveStatus())
                 .createdAt(createdAt)
                 .lastLogin(lastLogin)
                 .rolesDTOS(rolesDTOS)

@@ -3,6 +3,8 @@ package com.verizon.verizon.dtos.entities_dto;
 import com.verizon.verizon.entity.Roles;
 import com.verizon.verizon.entity.User;
 import com.verizon.verizon.entity.UserSecurityQuestion;
+import com.verizon.verizon.userstatuses.NonActiveStatus;
+import com.verizon.verizon.userstatuses.UserStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -14,7 +16,7 @@ public class UserDTO {
     public final Long id;
     public final String email;
     public final String name;
-    private final boolean isActive;
+    private final UserStatus status;
     private final LocalDateTime createdAt;
     private final LocalDateTime lastLogin;
     public List<RolesDTO> rolesDTOS;
@@ -25,7 +27,7 @@ public class UserDTO {
         this.id = builder.id;
         this.email = builder.email;
         this.name = builder.name;
-        this.isActive = builder.isActive;
+        this.status = builder.status;
         this.createdAt = builder.createdAt;
         this.lastLogin = builder.lastLogin;
         this.rolesDTOS = builder.rolesDTOS;
@@ -53,8 +55,8 @@ public class UserDTO {
         return email;
     }
 
-    public boolean isActive() {
-        return isActive;
+    public UserStatus status() {
+        return status;
     }
 
     public String getName() {
@@ -98,7 +100,7 @@ public class UserDTO {
         private final String email;
         private final String name;
         private final String accessToken;
-        private boolean isActive = false;
+        private UserStatus status = new NonActiveStatus();
         private LocalDateTime createdAt = LocalDateTime.now();
         private LocalDateTime lastLogin = LocalDateTime.now();
         private List<RolesDTO> rolesDTOS = new ArrayList<>();
@@ -113,8 +115,8 @@ public class UserDTO {
         }
 
         // constructor for primitive optional params
-        public Builder isActive(boolean isActive) {
-            this.isActive = isActive;
+        public Builder status(UserStatus status) {
+            this.status = status;
             return this;
         }
 
@@ -151,7 +153,7 @@ public class UserDTO {
             return null;
         }
         UserDTO newUserDTO = new UserDTO.Builder(user.getId(), user.getEmail(), user.getName(), user.getAccessToken())
-                .isActive(user.isActive())
+                .status(user.status())
                 .createdAt(user.getCreatedAt())
                 .lastLogin(user.getLastLogin())
                 .build();

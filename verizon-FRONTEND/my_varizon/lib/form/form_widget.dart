@@ -319,7 +319,7 @@ class _FormWidgetState extends State<FormWidget> {
                   const SizedBox(height: 10),
                 ],
                 SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
-                CheckboxWidget(),
+                state.isSignUpMode ? SizedBox.shrink() : CheckboxWidget(),
                 SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
                 Align(
                   alignment: Alignment.topLeft,
@@ -365,6 +365,7 @@ class _FormWidgetState extends State<FormWidget> {
                     : SizedBox(
                       height: LayOutWidget.isMobile(context) ? 10 : 20,
                     ),
+                SizedBox(height: 10),
                 Align(
                   alignment: Alignment.topLeft,
                   child:

@@ -12,6 +12,7 @@ import com.verizon.verizon.repository.SecurityQuestionRepository;
 import com.verizon.verizon.repository.UserRepository;
 import com.verizon.verizon.repository.UserSecurityQuestionRepository;
 import com.verizon.verizon.service.jwtutils.JwtTokenProviderImpl;
+import com.verizon.verizon.userstatuses.ActiveStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -78,7 +79,7 @@ public class AuthServiceImpl implements AuthService {
         // CREATE USER
         User user = new User.Builder(authRequestDTO.getName(), authRequestDTO.getEmail(), hashedPassword)
                 .createdAt(LocalDateTime.now())
-                .isActive(true)
+                .status(new ActiveStatus())
                 .userSecurityQuestion(savedUserSecurityQuestion)
                 .roles(List.of(defaultRole))
                 .build();
@@ -101,7 +102,7 @@ public class AuthServiceImpl implements AuthService {
         );
 
         return new AuthResponseDTO.Builder(accessToken, message)
-                .isActive(true)
+                .status(new ActiveStatus())
                 .requiresVerification(false)
                 .securityDataResponseDto(securityDataResponseDto)
                 .build();
@@ -139,6 +140,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Build response
         return new AuthResponseDTO.Builder(tempToken, message)
+                .status(new ActiveStatus())
                 .userDTO(UserDTO.convertToUserDTO(user))
                 .lastLogin(LocalDateTime.now())
                 .build();
@@ -186,4 +188,22 @@ public class AuthServiceImpl implements AuthService {
                 .securityDataResponseDto(securityDataResponseDto)
                 .build();
     }
+
+    // Helper method to create context
+//    private UserStatusContext createStatusContext(User user) {
+//        UserStatusContext context = new UserStatusContext(null);
+//
+//        UserStatus initialStatus;
+//        if (!user.isRegistrationComplete()) {
+//            initialStatus = new NonActiveStatus(context);
+//        } else if (user.isLocked()) {
+//            initialStatus = new LockedStatus(context);
+//        } else if (user.isSuspended()) {
+//            initialStatus = new SuspendedStatus(context);
+//        } else {
+//            initialStatus = new ActiveStatus(context);
+//        }
+//
+//        return context.setStatus(initialStatus);
+//    }
 }

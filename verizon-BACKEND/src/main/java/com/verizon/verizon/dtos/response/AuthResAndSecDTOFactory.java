@@ -1,6 +1,9 @@
 package com.verizon.verizon.dtos.response;
 
 import com.verizon.verizon.dtos.entities_dto.UserDTO;
+import com.verizon.verizon.userstatuses.ActiveStatus;
+import com.verizon.verizon.userstatuses.NonActiveStatus;
+import com.verizon.verizon.userstatuses.UserStatus;
 
 import java.time.LocalDateTime;
 
@@ -16,6 +19,7 @@ public class AuthResAndSecDTOFactory {
                                             UserDTO userDTO
     ){
         return  new AuthResponseDTO.Builder(accessToken,message)
+                .status(new NonActiveStatus())
                 .userDTO(userDTO)
                 .lastLogin(lastLogin)
                 .build();
@@ -27,6 +31,7 @@ public class AuthResAndSecDTOFactory {
                                                        SecurityDataResponseDto securityDataResponseDto){
 
         return new AuthResponseDTO.Builder(accessToken,message)
+                .status(new NonActiveStatus())
                 .userDTO(userDTO)
                 .securityDataResponseDto(securityDataResponseDto)
                 .build();
@@ -41,9 +46,9 @@ public class AuthResAndSecDTOFactory {
                                             String accessToken,
                                             SecurityDataResponseDto securityDataResponseDto,
                                             UserDTO userDTO,
-                                            boolean isActive) {
+                                            UserStatus status) {
         return new AuthResponseDTO.Builder(accessToken, message)
-                .isActive(isActive)
+                .status(new ActiveStatus())
                 .verificationToken(verificationToken)
                 .requiresVerification(requiresVerification)
                 .securityDataResponseDto(securityDataResponseDto)

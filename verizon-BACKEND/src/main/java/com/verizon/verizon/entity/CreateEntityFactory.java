@@ -1,7 +1,7 @@
 package com.verizon.verizon.entity;
 
-import org.springframework.stereotype.Component;
-
+import com.verizon.verizon.userstatuses.ActiveStatus;
+import com.verizon.verizon.userstatuses.UserStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class CreateEntityFactory {
                                   String accessToken,
                                   LocalDateTime createdAt,
                                   LocalDateTime lastLogin,
-                                  boolean isActive,
+                                  UserStatus status,
                                   UserSecurityQuestion userSecurityQuestion,
                                   List<Roles>roles
     )
@@ -49,7 +49,7 @@ public class CreateEntityFactory {
                 .accessToken(accessToken)
                 .createdAt(createdAt)
                 .lastLogin(lastLogin)
-                .isActive(isActive)
+                .status(new ActiveStatus())
                 .userSecurityQuestion(userSecurityQuestion)
                 .roles(roles)
                 .build();

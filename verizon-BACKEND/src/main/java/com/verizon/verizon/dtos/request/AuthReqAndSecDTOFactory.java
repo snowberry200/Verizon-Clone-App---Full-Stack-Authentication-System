@@ -1,5 +1,9 @@
 package com.verizon.verizon.dtos.request;
 
+import com.verizon.verizon.userstatuses.ActiveStatus;
+import com.verizon.verizon.userstatuses.NonActiveStatus;
+import com.verizon.verizon.userstatuses.UserStatus;
+
 public class AuthReqAndSecDTOFactory {
     private AuthReqAndSecDTOFactory(){
         throw new IllegalArgumentException(" instance can not be created for this private constructor");
@@ -8,7 +12,7 @@ public class AuthReqAndSecDTOFactory {
     public static AuthRequestDTO forSignIn(String email,
                                            String password){
         return new AuthRequestDTO.Builder(email,password,"")
-                .isActive(false)
+                .status(new NonActiveStatus())
                 .build();
 
     }
@@ -26,7 +30,7 @@ public class AuthReqAndSecDTOFactory {
     public static AuthRequestDTO forSignUp(String email,
                                            String password,
                                            String name,
-                                           boolean isActive,
+                                           UserStatus status,
                                            SecurityDataRequestDTO securityDataRequestDTO){
 
         //validate securityDataRequestDTO because it is a required dependent param
@@ -40,7 +44,7 @@ public class AuthReqAndSecDTOFactory {
             throw new IllegalArgumentException("Security answer is required for registration");
         }
         return new AuthRequestDTO.Builder(email,password,name)
-                .isActive(isActive)
+                .status(new ActiveStatus())
                 .securityDataRequestDTO(securityDataRequestDTO)
                 .build();
 

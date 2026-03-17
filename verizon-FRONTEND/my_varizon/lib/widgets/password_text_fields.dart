@@ -83,7 +83,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
       controller: widget.passwordController,
       validator: (ifpassword) {
         if (ifpassword!.isNotEmpty && ifpassword.length < 6) {
-          return 'please enter correct password';
+          return ' "please enter correct password": #hint Abcde100%';
         } else if (ifpassword.isEmpty) {
           return "field can not be empty";
         }

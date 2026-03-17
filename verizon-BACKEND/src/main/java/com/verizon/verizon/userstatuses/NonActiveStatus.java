@@ -1,6 +1,10 @@
 package com.verizon.verizon.userstatuses;
 
-public class NonActiveStatus implements UserStatus{
+public class NonActiveStatus implements UserStatus {
+
+    public NonActiveStatus() {
+    }
+
     @Override
     public String getStatusCode() {
         return "NONACTIVE";
@@ -8,7 +12,7 @@ public class NonActiveStatus implements UserStatus{
 
     @Override
     public String getStatusName() {
-        return "NonActive";
+        return "Non-Active";
     }
 
     @Override
@@ -18,6 +22,8 @@ public class NonActiveStatus implements UserStatus{
 
     @Override
     public String getNextStepMessage() {
-        return "sorry you are not a member yet";
+        return "Please complete your registration to activate your account";
     }
+
+
 }

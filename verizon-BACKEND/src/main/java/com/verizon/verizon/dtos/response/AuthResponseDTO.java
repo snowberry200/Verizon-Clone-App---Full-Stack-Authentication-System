@@ -1,6 +1,8 @@
 package com.verizon.verizon.dtos.response;
 
 import com.verizon.verizon.dtos.entities_dto.UserDTO;
+import com.verizon.verizon.userstatuses.NonActiveStatus;
+import com.verizon.verizon.userstatuses.UserStatus;
 import jakarta.annotation.Nullable;
 
 import java.time.LocalDateTime;
@@ -9,7 +11,7 @@ public class AuthResponseDTO {
     private final UserDTO userDTO;
     private final String accessToken;
     private final String message;
-    private final boolean isActive;
+    private final UserStatus status;
     private final boolean requiresVerification;
     private final String verificationToken;
     private final SecurityDataResponseDto securityDataResponseDto;
@@ -20,7 +22,7 @@ public class AuthResponseDTO {
         this.userDTO = builder.userDTO;
         this.accessToken = builder.accessToken;
         this.message = builder.message;
-        this.isActive = builder.isActive;
+        this.status = builder.status;
         this.requiresVerification = builder.requiresVerification;
         this.verificationToken = builder.verificationToken;
         this.createdAt = builder.createdAt;
@@ -49,8 +51,8 @@ public class AuthResponseDTO {
         return lastLogin;
     }
 
-    public boolean isActive() {
-        return isActive;
+    public UserStatus status() {
+        return status;
     }
 
     public boolean isRequiresVerification() {
@@ -76,7 +78,7 @@ public class AuthResponseDTO {
         private  SecurityDataResponseDto securityDataResponseDto;
 
         // optional params
-        private  boolean isActive = false;
+        private  UserStatus status = new NonActiveStatus();
         private  boolean requiresVerification =false;
         private  String verificationToken = "";
         @Nullable
@@ -91,8 +93,8 @@ public class AuthResponseDTO {
         }
 
         // factory methods for optional params
-        public Builder isActive (boolean isActive){
-            this.isActive = isActive;
+        public Builder status (UserStatus status){
+            this.status = status;
             return this;
         }
         public Builder requiresVerification (boolean requiresVerification){

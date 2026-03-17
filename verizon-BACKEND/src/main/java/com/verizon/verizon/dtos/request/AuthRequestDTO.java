@@ -1,16 +1,20 @@
 package com.verizon.verizon.dtos.request;
+
+import com.verizon.verizon.userstatuses.NonActiveStatus;
+import com.verizon.verizon.userstatuses.UserStatus;
+
 public class AuthRequestDTO {
     private final String email;
     private final String password;
     private final SecurityDataRequestDTO securityDataRequestDTO;
     private final String name;
-    private final boolean isActive;
+    private final UserStatus status;
 
-    AuthRequestDTO(Builder builder){
+    AuthRequestDTO(Builder builder) {
         this.email = builder.email;
         this.password = builder.password;
-        this.name  = builder.name ;
-        this.isActive = builder.isActive;
+        this.name = builder.name;
+        this.status = builder.status;
         this.securityDataRequestDTO = builder.securityDataRequestDTO;
     }
 
@@ -30,8 +34,8 @@ public class AuthRequestDTO {
         return securityDataRequestDTO;
     }
 
-    public boolean isActive() {
-        return isActive;
+    public UserStatus status() {
+        return status;
     }
 
 
@@ -41,14 +45,14 @@ public class AuthRequestDTO {
         private final String password;
         private final String name;
         //required non-primitive dependent param
-        private  SecurityDataRequestDTO securityDataRequestDTO;
+        private SecurityDataRequestDTO securityDataRequestDTO;
         //optional primitive param
-        private boolean isActive = false;
+        private UserStatus status = new NonActiveStatus();
 
         //constructor for required primitive params
         public Builder(String email,
                        String password,
-                       String name){
+                       String name) {
             if (email == null || email.trim().isEmpty()) {
                 throw new IllegalArgumentException("Email is required");
 
@@ -56,21 +60,24 @@ public class AuthRequestDTO {
             if (password == null || password.trim().isEmpty()) {
                 throw new IllegalArgumentException("Password is required");
             }
-            this.email = email;this.password = password;this.name = name;}
+            this.email = email;
+            this.password = password;
+            this.name = name;
+        }
 
         //constructor for optional primitive param
-        public Builder isActive(boolean isActive){
-            this.isActive = isActive;
+        public Builder status(UserStatus status) {
+            this.status = status;
             return this;
         }
 
         //constructor for required non-primitive dependent params
-        public Builder securityDataRequestDTO(SecurityDataRequestDTO securityDataRequestDTO){
+        public Builder securityDataRequestDTO(SecurityDataRequestDTO securityDataRequestDTO) {
             this.securityDataRequestDTO = securityDataRequestDTO;
             return this;
         }
 
-        public AuthRequestDTO build(){
+        public AuthRequestDTO build() {
             return new AuthRequestDTO(this);
 
         }

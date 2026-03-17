@@ -1,11 +1,10 @@
 package com.verizon.verizon.userstatuses;
 
-public class ActiveStatus implements UserStatus{
-    UserStatusObject userStatusObject;
+public class ActiveStatus implements UserStatus {
 
-    public ActiveStatus(UserStatusObject userStatusObject){
-        this.userStatusObject = userStatusObject;
+    public ActiveStatus() {
     }
+
     @Override
     public String getStatusCode() {
         return "ACTIVE";
@@ -23,6 +22,7 @@ public class ActiveStatus implements UserStatus{
 
     @Override
     public String getNextStepMessage() {
-        return "Welcome";
+        return "Welcome back!";
     }
+
 }

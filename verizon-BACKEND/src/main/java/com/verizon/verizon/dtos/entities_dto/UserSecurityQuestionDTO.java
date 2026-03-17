@@ -34,7 +34,6 @@ public class UserSecurityQuestionDTO {
     }
 
 
-
     public static class Builder {
         private final Long id;
         private final String answer;
@@ -65,7 +64,6 @@ public class UserSecurityQuestionDTO {
     }
 
 
-
     public List<UserDTO> getUserDTOS() {
         return userDTOS;
     }
@@ -73,6 +71,7 @@ public class UserSecurityQuestionDTO {
     public void setUserDTOS(List<UserDTO> userDTOS) {
         this.userDTOS = userDTOS;
     }
+
     public SecurityQuestionDTO getSecurityQuestionDTO() {
         return securityQuestionDTO;
     }
@@ -80,6 +79,7 @@ public class UserSecurityQuestionDTO {
     public void setSecurityQuestionDTO(SecurityQuestionDTO securityQuestionDTO) {
         this.securityQuestionDTO = securityQuestionDTO;
     }
+
     public Long getId() {
         return id;
     }
