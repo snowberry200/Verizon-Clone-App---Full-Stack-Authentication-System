@@ -4,11 +4,12 @@ public class UserStatusContext {
 
     UserStatus currentStatus;
 
-    public UserStatusContext(UserStatus currentStatus) {
-        this.currentStatus = currentStatus;
+    public UserStatusContext() {
+        // assign current status to initial status
+        this.currentStatus = new NonActiveStatus(this);
     }
 
-
+    // delegate interface methods to context class
     public String getStatusCode() {
         return currentStatus.getStatusCode();
     }
@@ -25,13 +26,18 @@ public class UserStatusContext {
         return currentStatus.getNextStepMessage();
     }
 
-    public UserStatusContext setStatus(UserStatus userStatus) {
-        currentStatus = userStatus;
-        return this;
+    public void activate() {
+        currentStatus.activate();
     }
 
-    public UserStatus getCurrentStatus() {
-        return currentStatus;
+    public void deActivate() {
+        currentStatus.deActivate();
+
+    }
+
+    // helper method to set to new status
+    public void setStatus(UserStatus userStatus) {
+        currentStatus = userStatus;
     }
 
 }

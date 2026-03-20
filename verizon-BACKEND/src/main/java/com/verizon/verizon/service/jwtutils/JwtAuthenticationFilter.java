@@ -53,17 +53,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
 
-            // ✅ ALWAYS continue the filter chain
+            // continue the filter chain
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
             SecurityContextHolder.clearContext();
-            // ✅ Still need to continue the chain even on error
+            //Still need to continue the chain even on error
             filterChain.doFilter(request, response);
         }
     }
 
-    // ✅ Add this to exclude login endpoints
+    // Add this to exclude login endpoints
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String path = request.getRequestURI();

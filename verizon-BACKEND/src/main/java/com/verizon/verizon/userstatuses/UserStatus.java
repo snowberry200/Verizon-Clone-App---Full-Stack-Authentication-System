@@ -5,4 +5,6 @@ public interface UserStatus {
     String getStatusName();
     boolean canLogin();
     String getNextStepMessage();
+    void activate();
+    void deActivate();
 }

@@ -1,8 +1,11 @@
 package com.verizon.verizon.userstatuses;
 
 public class ActiveStatus implements UserStatus {
+    //dependency injection (constructor injection)
+    UserStatusContext userStatusContext;
 
-    public ActiveStatus() {
+    public ActiveStatus(UserStatusContext userStatusContext) {
+        this.userStatusContext = userStatusContext;
     }
 
     @Override
@@ -25,4 +28,16 @@ public class ActiveStatus implements UserStatus {
         return "Welcome back!";
     }
 
+    @Override
+    public void activate() {
+        System.out.println("user is already active");
+    }
+
+    @Override
+    public void deActivate() {
+        userStatusContext.setStatus(new NonActiveStatus(this.userStatusContext));
+
+    }
+
 }
+

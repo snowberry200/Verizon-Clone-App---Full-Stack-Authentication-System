@@ -8,7 +8,7 @@ public interface JwtTokenProvider{
     // a. create signing key
      Key createSignInKey();
      // b. create Token
-    String createToken(User user);
+    String createAccessToken(User user);
     // c. validate Token
     boolean validateToken(String token);
     // d. extract userName from Token
@@ -17,4 +17,6 @@ public interface JwtTokenProvider{
     Long extractId(String token);
     // f. extract Role from Token
     Roles extractRoleFromToken(String token);
+    // g. verification Token
+    String createVerificationToken(User user);
 }

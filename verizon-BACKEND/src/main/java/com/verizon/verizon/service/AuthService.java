@@ -7,4 +7,6 @@ public interface AuthService {
     AuthResponseDTO signUp(AuthRequestDTO authRequestDTO);
     AuthResponseDTO signIn(AuthRequestDTO authRequestDTO);
     AuthResponseDTO forSecurityChallenge(AuthRequestDTO authRequestDTO);
+    AuthResponseDTO verifyEmail(String token);
+    AuthResponseDTO resendVerificationEmail(String email);
 }

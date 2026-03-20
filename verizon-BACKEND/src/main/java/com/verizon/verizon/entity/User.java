@@ -1,9 +1,6 @@
 package com.verizon.verizon.entity;
 
-import com.verizon.verizon.userstatuses.UserStatusContext;
-import com.verizon.verizon.userstatuses.UserStatus;
-import com.verizon.verizon.userstatuses.StatusFactory;
-import com.verizon.verizon.userstatuses.NonActiveStatus;
+import com.verizon.verizon.userstatuses.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,14 +22,6 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    // Store statusCode in database (simple string)
-    @Column(name = "status_code", nullable = false)
-    private String statusCode = "NONACTIVE";
-
-    // ✅ Use UserStatusContext instead of raw UserStatus
-    @Transient
-    private UserStatusContext statusContext;
-
     // Optional params
     @Column(nullable = true)
     private LocalDateTime createdAt;
@@ -40,6 +29,20 @@ public class User {
     private LocalDateTime lastLogin;
     @Column(nullable = true)
     private String accessToken;
+    @Column(nullable = true)
+    private String verificationToken;
+
+    @Column(nullable = true)
+    private LocalDateTime verificationTokenExpiry;
+
+    @Column(nullable = true)
+    private LocalDateTime verifiedAt;
+    @Column(nullable = false)
+    private String statusCode;
+    @Transient
+    private UserStatusContext userStatusContext;
+    @Transient
+    private UserStatus currentStatus;
 
     // non-primitive dependable params
     @ManyToOne()
@@ -51,6 +54,49 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private List<Roles> roles = new ArrayList<>();
+
+    public void initializeStatusContext(){
+        this.userStatusContext = new UserStatusContext();
+        // Set the initial status based on statusCode from database
+        this.currentStatus = createStatusFromCode(this.statusCode);
+        userStatusContext.setStatus(currentStatus);
+    }
+    // Create appropriate status object from code
+    private UserStatus createStatusFromCode(String code) {
+        if ("ACTIVE".equals(code)) {
+            return new ActiveStatus(this.userStatusContext);
+        } else {
+            return new NonActiveStatus(this.userStatusContext);
+        }
+    }
+
+    // JPA callback - reinitialize transient fields after loading from database
+    @PostLoad
+    private void postLoad() {
+        initializeStatusContext();
+    }
+
+    // Delegate methods that use the State pattern
+    public boolean canLogin() {
+        return userStatusContext.canLogin();
+    }
+
+    public String getNextStepMessage() {
+        return userStatusContext.getNextStepMessage();
+    }
+
+    public void activate() {
+        userStatusContext.activate();
+        // After state changes, update the persisted statusCode
+        this.statusCode = userStatusContext.getStatusCode();
+    }
+
+    public void deActivate() {
+        userStatusContext.deActivate();
+        // After state changes, update the persisted statusCode
+        this.statusCode = userStatusContext.getStatusCode();
+    }
+
 
     public User() {
         //for JPA
@@ -65,83 +111,112 @@ public class User {
         this.createdAt = builder.createdAt;
         this.lastLogin = builder.lastLogin;
         this.accessToken = builder.accessToken;
+        this.verificationToken = builder.verificationToken;
+        this.verificationTokenExpiry = builder.verificationTokenExpiry;
+        this.verifiedAt = builder.verifiedAt;
 
-        // ✅ Handle status context properly
-        if (builder.statusContext != null) {
-            this.statusContext = builder.statusContext;
-            this.statusCode = this.statusContext.getStatusCode();
-        } else {
-            UserStatus defaultStatus = new NonActiveStatus();
-            this.statusContext = new UserStatusContext(defaultStatus);
+        // Initialize the state pattern after all fields are set
+        initializeStatusContext();
+    }
+
+
+    // helper method to add role
+    public void addSingleRole(Roles role) {
+        if (this.roles == null) {
+            this.roles = new ArrayList<>();
+        }
+        if (!this.roles.contains(role)) {
+            this.roles.add(role);
+            role.addSingleUserInRole(this);
+        }
+    }
+
+
+    public static class Builder {
+        private final String name;
+        private final String email;
+        private final String password;
+        private String accessToken ;
+        private String verificationToken;
+        private LocalDateTime verificationTokenExpiry;
+        private LocalDateTime verifiedAt;
+        private String statusCode = "NONACTIVE";  // Default status
+        private LocalDateTime createdAt = LocalDateTime.now();
+        private LocalDateTime lastLogin = LocalDateTime.now();
+        private UserSecurityQuestion userSecurityQuestion;
+        private List<Roles> roles = new ArrayList<>();
+
+        public Builder(String name, String email, String password) {
+            this.name = name;
+            this.email = email;
+            this.password = password;
+
+            // OPTIONAL PRIMITIVE PARAMS
+            this.accessToken = "";
+            this.createdAt = LocalDateTime.now();
+            this.lastLogin = LocalDateTime.now();
             this.statusCode = "NONACTIVE";
+
+            // ✅ Default values for verification fields
+            this.verificationToken = null;
+            this.verificationTokenExpiry = null;
+            this.verifiedAt = null;
+
+            this.userSecurityQuestion = null;
+            this.roles = new ArrayList<>();
+
+
+        }
+
+        public Builder accessToken(String accessToken) {
+            this.accessToken = accessToken;
+            return this;
+        }
+
+        public Builder verificationToken(String verificationToken) {
+            this.verificationToken = verificationToken;
+            return this;
+        }
+
+        public Builder verificationTokenExpiry(LocalDateTime verificationTokenExpiry) {
+            this.verificationTokenExpiry = verificationTokenExpiry;
+            return this;
+        }
+
+        public Builder verifiedAt(LocalDateTime verifiedAt) {
+            this.verifiedAt = verifiedAt;
+            return this;
+        }
+
+        public Builder createdAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
+        public Builder lastLogin(LocalDateTime lastLogin) {
+            this.lastLogin = lastLogin;
+            return this;
+        }
+
+        public Builder userSecurityQuestion(UserSecurityQuestion userSecurityQuestion) {
+            this.userSecurityQuestion = userSecurityQuestion;
+            return this;
+        }
+
+        public Builder roles(List<Roles> roles) {
+            this.roles = roles;
+            return this;
+        }
+
+        public Builder statusCode(String statusCode) {
+            this.statusCode = statusCode;
+            return this;
+        }
+
+        public User build() {
+            return new User(this);
         }
     }
-
-    // ✅ JPA lifecycle methods
-    @PostLoad
-    private void initStatusContext() {
-        // Convert stored code to status object and wrap in context
-        UserStatus status = StatusFactory.getStatusByCode(this.statusCode);
-        this.statusContext = new UserStatusContext(status);
-    }
-
-    @PrePersist
-    @PreUpdate
-    private void updateStatusCode() {
-        if (this.statusContext != null) {
-            this.statusCode = this.statusContext.getStatusCode();
-        }
-    }
-
-    // ✅ Getters and setters for status context
-    public UserStatusContext getStatusContext() {
-        if (this.statusContext == null && this.statusCode != null) {
-            UserStatus status = StatusFactory.getStatusByCode(this.statusCode);
-            this.statusContext = new UserStatusContext(status);
-        }
-        return this.statusContext;
-    }
-
-    public void setStatusContext(UserStatusContext statusContext) {
-        this.statusContext = statusContext;
-        if (statusContext != null) {
-            this.statusCode = statusContext.getStatusCode();
-        }
-    }
-
-    // ✅ Convenience method to set status directly
-    public void setStatus(UserStatus newStatus) {
-        if (this.statusContext == null) {
-            this.statusContext = new UserStatusContext(newStatus);
-        } else {
-            this.statusContext.setStatus(newStatus);
-        }
-        this.statusCode = newStatus.getStatusCode();
-    }
-
-    // ✅ Convenience method to change status by code
-    public void changeStatusByCode(String statusCode) {
-        UserStatus newStatus = StatusFactory.getStatusByCode(statusCode);
-        setStatus(newStatus);
-    }
-
-    // ✅ Delegate methods to context
-    public boolean canLogin() {
-        return getStatusContext().canLogin();
-    }
-
-    public String getNextStepMessage() {
-        return getStatusContext().getNextStepMessage();
-    }
-
-    public String getStatusName() {
-        return getStatusContext().getStatusName();
-    }
-
-    public String getStatusCode() {
-        return statusCode;
-    }
-
     // Regular getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -167,93 +242,36 @@ public class User {
     public String getAccessToken() { return accessToken; }
     public void setAccessToken(String accessToken) { this.accessToken = accessToken; }
 
+    public String getVerificationToken() { return verificationToken; }
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
+    }
+
+    public LocalDateTime getVerificationTokenExpiry() { return verificationTokenExpiry; }
+    public void setVerificationTokenExpiry(LocalDateTime verificationTokenExpiry) {
+        this.verificationTokenExpiry = verificationTokenExpiry;
+    }
+
+    public LocalDateTime getVerifiedAt() { return verifiedAt; }
+    public void setVerifiedAt(LocalDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
     public UserSecurityQuestion getUserSecurityQuestion() { return userSecurityQuestion; }
     public void setUserSecurityQuestion(UserSecurityQuestion userSecurityQuestion) {
         this.userSecurityQuestion = userSecurityQuestion;
     }
 
-    // helper method to add role
-    public void addSingleRole(Roles role) {
-        if (this.roles == null) {
-            this.roles = new ArrayList<>();
-        }
-        if (!this.roles.contains(role)) {
-            this.roles.add(role);
-            role.addSingleUserInRole(this);
-        }
+    public String getStatusCode() {
+        return statusCode;
     }
 
-    public static class Builder {
-        private final String name;
-        private final String email;
-        private final String password;
-
-        // ✅ Use UserStatusContext in builder
-        private UserStatusContext statusContext;
-        private String accessToken = "";
-        private LocalDateTime createdAt = LocalDateTime.now();
-        private LocalDateTime lastLogin = LocalDateTime.now();
-        private UserSecurityQuestion userSecurityQuestion;
-        private List<Roles> roles = new ArrayList<>();
-
-        public Builder(String name, String email, String password) {
-            this.name = name;
-            this.email = email;
-            this.password = password;
-        }
-
-        // ✅ Builder methods for status
-        public Builder statusContext(UserStatusContext statusContext) {
-            this.statusContext = statusContext;
-            return this;
-        }
-
-        public Builder status(UserStatus status) {
-            this.statusContext = new UserStatusContext(status);
-            return this;
-        }
-
-        public Builder statusByCode(String statusCode) {
-            UserStatus status = StatusFactory.getStatusByCode(statusCode);
-            this.statusContext = new UserStatusContext(status);
-            return this;
-        }
-
-        public Builder withActiveStatus() {
-            return statusByCode("ACTIVE");
-        }
-
-        public Builder withNonActiveStatus() {
-            return statusByCode("NONACTIVE");
-        }
-
-        public Builder accessToken(String accessToken) {
-            this.accessToken = accessToken;
-            return this;
-        }
-
-        public Builder createdAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
-            return this;
-        }
-
-        public Builder lastLogin(LocalDateTime lastLogin) {
-            this.lastLogin = lastLogin;
-            return this;
-        }
-
-        public Builder userSecurityQuestion(UserSecurityQuestion userSecurityQuestion) {
-            this.userSecurityQuestion = userSecurityQuestion;
-            return this;
-        }
-
-        public Builder roles(List<Roles> roles) {
-            this.roles = roles;
-            return this;
-        }
-
-        public User build() {
-            return new User(this);
+    public void setStatusCode(String statusCode) {
+        this.statusCode = statusCode;
+        // Also update the state pattern when status is manually changed
+        if (this.userStatusContext != null) {
+            this.currentStatus = createStatusFromCode(statusCode);
+            this.userStatusContext.setStatus(this.currentStatus);
         }
     }
 }

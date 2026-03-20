@@ -1,8 +1,10 @@
 package com.verizon.verizon.userstatuses;
 
 public class NonActiveStatus implements UserStatus {
+    UserStatusContext userStatusContext;
 
-    public NonActiveStatus() {
+    public NonActiveStatus(UserStatusContext userStatusContext) {
+        this.userStatusContext = userStatusContext;
     }
 
     @Override
@@ -25,5 +27,14 @@ public class NonActiveStatus implements UserStatus {
         return "Please complete your registration to activate your account";
     }
 
+    public void activate() {
+        this.userStatusContext.setStatus(new ActiveStatus(this.userStatusContext));
 
+    }
+
+    public void deActivate() {
+        System.out.println("you do not have authorized access");
+
+    }
 }
+

@@ -1,25 +1,21 @@
 package com.verizon.verizon.userstatuses;
 
 public class StatusFactory {
-    private  StatusFactory(){}
+    private final UserStatusContext userStatusContext;
+    public  StatusFactory(UserStatusContext userStatusContext){
+        this.userStatusContext = userStatusContext;
+    }
 
     // The KEY method that connects database to objects
-    public static UserStatus getStatusByCode(String statusCode) {
+    public  UserStatus getStatusByCode(String statusCode) {
         if (statusCode == null) {
-            return new NonActiveStatus();  // Default
+            return new NonActiveStatus(userStatusContext);  // Default
         }
         return switch (statusCode.toUpperCase()) {
-            case "ACTIVE" -> new ActiveStatus();
-            case "NONACTIVE", "INACTIVE" -> new NonActiveStatus();
+            case "ACTIVE" -> new ActiveStatus(userStatusContext);
+            case "NONACTIVE", "INACTIVE" -> new NonActiveStatus(userStatusContext);
             default -> throw new IllegalArgumentException("Unknown status code: " + statusCode);
         };
     }
 
-    public static NonActiveStatus createNonActiveStatusObject(){
-        return new NonActiveStatus();
-    }
-
-    public static ActiveStatus createActiveStatusObject(){
-        return new ActiveStatus();
-    }
 }

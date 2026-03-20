@@ -1,8 +1,5 @@
 package com.verizon.verizon.dtos.entities_dto;
 
-
-import com.verizon.verizon.userstatuses.ActiveStatus;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,19 +16,29 @@ public class CreateDTOFactory {
                                         String email,
                                         String name,
                                         String accessToken,
-                                        boolean isActive,
+                                        String verificationToken,
+                                        LocalDateTime verificationTokenExpiry,
+                                        LocalDateTime verifiedAt,
+                                        String statusCode,
                                         LocalDateTime createdAt,
                                         LocalDateTime lastLogin,
                                         List<RolesDTO> rolesDTOS,
                                         UserSecurityQuestionDTO userSecurityQuestionDTO) {
-        UserDTO newUserDTO = new UserDTO.Builder(id,
-                name, email, accessToken)
-                .status(new ActiveStatus())
+        // Validate required fields
+        if (id == null || email == null || name == null || accessToken == null || statusCode == null) {
+            throw new IllegalArgumentException("Required fields cannot be null");
+        }
+        UserDTO.Builder builder = new UserDTO.Builder(id,
+                name, email, accessToken, statusCode)
                 .createdAt(createdAt)
                 .lastLogin(lastLogin)
+                .verificationToken(verificationToken)
+                .verificationTokenExpiry(verificationTokenExpiry)
+                .verifiedAt(verifiedAt)
                 .rolesDTOS(rolesDTOS)
-                .userSecurityQuestionDTO(userSecurityQuestionDTO)
-                .build();
+                .userSecurityQuestionDTO(userSecurityQuestionDTO);
+
+        UserDTO newUserDTO = builder.build();
 
         if (rolesDTOS != null) {
             for (RolesDTO rolesDTO : rolesDTOS) {
@@ -40,7 +47,83 @@ public class CreateDTOFactory {
         }
         return newUserDTO;
 
+
     }
+
+    // Overloaded method for creating unverified user DTO (during registration)
+    public static UserDTO createUnverifiedUserDTO(Long id,
+                                                  String email,
+                                                  String name,
+                                                  String verificationToken,
+                                                  LocalDateTime verificationTokenExpiry,
+                                                  String statusCode,
+                                                  LocalDateTime createdAt,
+                                                  UserSecurityQuestionDTO userSecurityQuestionDTO) {
+
+        return createUserDTO(
+                id,                          // Long id
+                email,                       // String email
+                name,                        // String name
+                null,                        // String accessToken (null for unverified)
+                verificationToken,           // String verificationToken
+                verificationTokenExpiry,     // LocalDateTime verificationTokenExpiry
+                null,                        // LocalDateTime verifiedAt (null for unverified)
+                statusCode,                  // String statusCode
+                createdAt,                   // LocalDateTime createdAt
+                null,                        // LocalDateTime lastLogin (null for unverified)
+                null,                        // List<RolesDTO> rolesDTOS
+                userSecurityQuestionDTO      // UserSecurityQuestionDTO
+        );
+    }
+
+    // Create verified user DTO (after email verification)
+    public static UserDTO createVerifiedUserDTO(Long id,
+                                                String email,
+                                                String name,
+                                                String accessToken,
+                                                LocalDateTime verifiedAt,
+                                                String statusCode,
+                                                LocalDateTime createdAt,
+                                                LocalDateTime lastLogin,
+                                                List<RolesDTO> rolesDTOS,
+                                                UserSecurityQuestionDTO userSecurityQuestionDTO) {
+
+        return createUserDTO(
+                id,                          // Long id
+                email,                       // String email
+                name,                        // String name
+                accessToken,                 // String accessToken
+                null,                        // String verificationToken (cleared)
+                null,                        // LocalDateTime verificationTokenExpiry (cleared)
+                verifiedAt,                  // LocalDateTime verifiedAt
+                statusCode,                  // String statusCode (should be "ACTIVE")
+                createdAt,                   // LocalDateTime createdAt
+                lastLogin,                   // LocalDateTime lastLogin
+                rolesDTOS,                   // List<RolesDTO> rolesDTOS
+                userSecurityQuestionDTO      // UserSecurityQuestionDTO
+        );
+    }
+
+
+    // Create simple user DTO for testing or basic cases
+    public static UserDTO createSimpleUserDTO(Long id,
+                                              String email,
+                                              String name,
+                                              String statusCode) {
+        return createUserDTO(
+                id, email, name,
+                null,                        // No access token
+                null,                        // No verification token
+                null,                        // No token expiry
+                null,                        // Not verified
+                statusCode,                  // statusCode
+                LocalDateTime.now(),         // createdAt
+                null,                        // No lastLogin
+                null,                        // No roles
+                null                         // No security question
+        );
+    }
+
 
     //factory constructor to create SecurityQuestionDTO
     public static SecurityQuestionDTO createSecurityQuestionDTO(Long id, String questionText, String name) {
@@ -57,7 +140,7 @@ public class CreateDTOFactory {
     }
 
 
-    //factory constructor to create new userDTO
+    //factory constructor to create new roleDTO
     public static RolesDTO createRolesDTO(String name, Long id, List<UserDTO> userDTOS) {
         RolesDTO newRolesDTO = new RolesDTO.Builder(name, id)
                 .userDTO(userDTOS)

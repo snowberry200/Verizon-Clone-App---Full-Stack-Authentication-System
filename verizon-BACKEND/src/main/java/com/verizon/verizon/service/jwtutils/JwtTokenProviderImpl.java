@@ -35,7 +35,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider{
 
 
     @Override
-    public String createToken(User user) {
+    public String createAccessToken(User user) {
         try {
             Map<String,Object> claims = new HashMap<>();
             claims.put("email", user.getEmail());
@@ -108,5 +108,18 @@ public class JwtTokenProviderImpl implements JwtTokenProvider{
         } catch (ExpiredJwtException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public String createVerificationToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .claim("userId", user.getId())
+                .claim("type", "VERIFICATION_TOKEN")  // Different type!
+                .claim("purpose", "EMAIL_VERIFICATION")
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24 hours
+                .signWith(createSignInKey())
+                .compact();
     }
 }

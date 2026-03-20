@@ -27,7 +27,7 @@ class _SecurityAnswerFormFieldState extends State<SecurityAnswerFormField> {
         ),
         TextFormField(
           inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z]+$')),
+            FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z ]+$')),
           ],
           maxLength: 25,
           maxLines: 1,

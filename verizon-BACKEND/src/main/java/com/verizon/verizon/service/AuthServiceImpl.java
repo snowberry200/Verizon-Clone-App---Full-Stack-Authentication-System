@@ -1,6 +1,7 @@
 package com.verizon.verizon.service;
 
 import com.verizon.verizon.InvalidCredentialException;
+import com.verizon.verizon.constant.Validator;
 import com.verizon.verizon.dtos.entities_dto.UserDTO;
 import com.verizon.verizon.dtos.request.AuthRequestDTO;
 import com.verizon.verizon.dtos.response.AuthResAndSecDTOFactory;
@@ -44,13 +45,18 @@ public class AuthServiceImpl implements AuthService {
         this.jwtTokenProviderImpl = jwtTokenProviderImpl;
     }
 
+    private String generateVerificationToken(User user) {
+        // Implement your verification token generation logic
+        return jwtTokenProviderImpl.createVerificationToken(user);
+    }
+
     // REGISTRATION
     @Override
     public AuthResponseDTO signUp(AuthRequestDTO authRequestDTO) {
         //CHECK IF EMAIL EXIST IN DB
         boolean emailExists = userRepository.existsByEmail(authRequestDTO.getEmail());
         if (emailExists) {
-            throw new RuntimeException("email already exists");
+            throw new InvalidCredentialException("Email already exists");
         }
         //hash password
         String hashedPassword = passwordEncoder.encode(authRequestDTO.getPassword());
@@ -79,7 +85,7 @@ public class AuthServiceImpl implements AuthService {
         // CREATE USER
         User user = new User.Builder(authRequestDTO.getName(), authRequestDTO.getEmail(), hashedPassword)
                 .createdAt(LocalDateTime.now())
-                .status(new ActiveStatus())
+                .statusCode(Validator.NONACTIVE)
                 .userSecurityQuestion(savedUserSecurityQuestion)
                 .roles(List.of(defaultRole))
                 .build();
@@ -92,7 +98,7 @@ public class AuthServiceImpl implements AuthService {
         User savedUser = userRepository.save(user);
 
         // CREATE ACCESS-TOKEN
-        String accessToken = jwtTokenProviderImpl.createToken(savedUser);
+        String accessToken = jwtTokenProviderImpl.createAccessToken(savedUser);
         String message = "Registration successful, please Login to your new account";
 
         // Create SecurityDataResponseDto
@@ -102,10 +108,14 @@ public class AuthServiceImpl implements AuthService {
         );
 
         return new AuthResponseDTO.Builder(accessToken, message)
-                .status(new ActiveStatus())
-                .requiresVerification(false)
+                .statusCode(Validator.NONACTIVE)
+                .requiresVerification(true)
+                .userDTO(UserDTO.convertToUserDTO(savedUser))
+                .verificationToken(generateVerificationToken(savedUser))
+                .createdAt(savedUser.getCreatedAt())
                 .securityDataResponseDto(securityDataResponseDto)
                 .build();
+
     }
 
     // SIGN IN
@@ -136,11 +146,11 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Generate access token
-        String tempToken = jwtTokenProviderImpl.createToken(user);
+        String tempToken = jwtTokenProviderImpl.createAccessToken(user);
 
         // Build response
         return new AuthResponseDTO.Builder(tempToken, message)
-                .status(new ActiveStatus())
+                .statusCode(Validator.ACTIVE)
                 .userDTO(UserDTO.convertToUserDTO(user))
                 .lastLogin(LocalDateTime.now())
                 .build();
@@ -172,7 +182,7 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         // Generate token
-        String token = jwtTokenProviderImpl.createToken(user);
+        String token = jwtTokenProviderImpl.createAccessToken(user);
         String message = "Welcome to Verizon";
 
         // Create security response DTO
@@ -186,24 +196,19 @@ public class AuthServiceImpl implements AuthService {
         return new AuthResponseDTO.Builder(token, message)
                 .userDTO(UserDTO.convertToUserDTO(user))
                 .securityDataResponseDto(securityDataResponseDto)
+                .statusCode(Validator.ACTIVE)
                 .build();
     }
 
-    // Helper method to create context
-//    private UserStatusContext createStatusContext(User user) {
-//        UserStatusContext context = new UserStatusContext(null);
-//
-//        UserStatus initialStatus;
-//        if (!user.isRegistrationComplete()) {
-//            initialStatus = new NonActiveStatus(context);
-//        } else if (user.isLocked()) {
-//            initialStatus = new LockedStatus(context);
-//        } else if (user.isSuspended()) {
-//            initialStatus = new SuspendedStatus(context);
-//        } else {
-//            initialStatus = new ActiveStatus(context);
-//        }
-//
-//        return context.setStatus(initialStatus);
-//    }
+    @Override
+    public AuthResponseDTO verifyEmail(String token) {
+        return null;
+    }
+
+    @Override
+    public AuthResponseDTO resendVerificationEmail(String email) {
+        return null;
+    }
+
+
 }

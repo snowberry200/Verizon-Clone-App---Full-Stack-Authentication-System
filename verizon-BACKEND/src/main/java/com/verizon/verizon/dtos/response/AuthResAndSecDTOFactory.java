@@ -1,64 +1,119 @@
 package com.verizon.verizon.dtos.response;
 
+import com.verizon.verizon.constant.Validator;
 import com.verizon.verizon.dtos.entities_dto.UserDTO;
-import com.verizon.verizon.userstatuses.ActiveStatus;
-import com.verizon.verizon.userstatuses.NonActiveStatus;
-import com.verizon.verizon.userstatuses.UserStatus;
-
 import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.UUID;
 
 public class AuthResAndSecDTOFactory {
-    private AuthResAndSecDTOFactory(){
-        throw new IllegalArgumentException("you can not create an instance with this private constructor");
+
+    private AuthResAndSecDTOFactory() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
 
-    // FACTORY CONSTRUCTOR FOR SIGN IN METHOD
-    public static AuthResponseDTO forSignIn(LocalDateTime lastLogin,
-                                            String message,
-                                            String accessToken,
-                                            UserDTO userDTO
-    ){
-        return  new AuthResponseDTO.Builder(accessToken,message)
-                .status(new NonActiveStatus())
-                .userDTO(userDTO)
-                .lastLogin(lastLogin)
-                .build();
-    }
+    // SIGN IN - One clear method
+    public static AuthResponseDTO forSignIn(
+            String accessToken,
+            String message,
+            UserDTO userDTO,
+            LocalDateTime lastLogin
+    ) {
+        Objects.requireNonNull(accessToken, Validator.ACCESS_TOKEN_NON_NULL);
+        Objects.requireNonNull(message, Validator.MESSAGE_NON_NULL);
+        Objects.requireNonNull(userDTO, Validator.USERDTO_NON_NULL);
 
-    // FACTORY CONSTRUCTOR FOR SECURITY CHALLENGE METHOD
-    public static AuthResponseDTO forSecurityChallenge(String accessToken,String message,
-                                                       UserDTO userDTO,
-                                                       SecurityDataResponseDto securityDataResponseDto){
-
-        return new AuthResponseDTO.Builder(accessToken,message)
-                .status(new NonActiveStatus())
-                .userDTO(userDTO)
-                .securityDataResponseDto(securityDataResponseDto)
-                .build();
-
-    }
-
-    // FACTORY CONSTRUCTOR FOR REGISTRATION METHOD
-    public static AuthResponseDTO forSignUp(LocalDateTime createdAt,
-                                            String verificationToken,
-                                            boolean requiresVerification,
-                                            String message,
-                                            String accessToken,
-                                            SecurityDataResponseDto securityDataResponseDto,
-                                            UserDTO userDTO,
-                                            UserStatus status) {
         return new AuthResponseDTO.Builder(accessToken, message)
-                .status(new ActiveStatus())
-                .verificationToken(verificationToken)
-                .requiresVerification(requiresVerification)
-                .securityDataResponseDto(securityDataResponseDto)
                 .userDTO(userDTO)
-                .createdAt(createdAt)
+                .statusCode(Validator.ACTIVE)
+                .requiresVerification(false)
+                .lastLogin(lastLogin != null ? lastLogin : LocalDateTime.now())
                 .build();
     }
 
-    // Factory method to create SecurityDataResponseDto object
-    public  static SecurityDataResponseDto createSecurityDataResponseDto(String securityQuestion, String message) {
-        return new SecurityDataResponseDto.Builder(securityQuestion, message).build();
+    // REGISTRATION - One clear method
+    public static AuthResponseDTO forSignUp(
+            String message,
+            UserDTO userDTO,
+            SecurityDataResponseDto securityDataResponseDto
+    ) {
+        Objects.requireNonNull(message, Validator.MESSAGE_NON_NULL);
+        Objects.requireNonNull(userDTO, Validator.USERDTO_NON_NULL);
+        Objects.requireNonNull(securityDataResponseDto, Validator.SECURITY_DATA_NON_NULL);
+
+        // Generate verification token
+        String verificationToken = UUID.randomUUID().toString();
+
+        return new AuthResponseDTO.Builder(null, message)  // No access token yet
+                .userDTO(userDTO)
+                .securityDataResponseDto(securityDataResponseDto)
+                .statusCode(Validator.NONACTIVE)
+                .requiresVerification(true)
+                .verificationToken(verificationToken)
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+    // EMAIL VERIFICATION - After user clicks link
+    public static AuthResponseDTO forEmailVerified(
+            String accessToken,
+            String message,
+            UserDTO userDTO,
+            SecurityDataResponseDto securityDataResponseDto
+    ) {
+        Objects.requireNonNull(accessToken, Validator.ACCESS_TOKEN_NON_NULL);
+        Objects.requireNonNull(message, Validator.MESSAGE_NON_NULL);
+        Objects.requireNonNull(userDTO, Validator.USERDTO_NON_NULL);
+        Objects.requireNonNull(securityDataResponseDto, Validator.SECURITY_DATA_NON_NULL);
+
+        return new AuthResponseDTO.Builder(accessToken, message)
+                .userDTO(userDTO)
+                .securityDataResponseDto(securityDataResponseDto)
+                .statusCode(Validator.ACTIVE)
+                .requiresVerification(false)
+                .lastLogin(LocalDateTime.now())
+                .build();
+    }
+
+    // SECURITY CHALLENGE - One clear method
+    public static AuthResponseDTO forSecurityChallenge(
+            String accessToken,
+            String message,
+            UserDTO userDTO,
+            SecurityDataResponseDto securityDataResponseDto
+    ) {
+        Objects.requireNonNull(accessToken, Validator.ACCESS_TOKEN_NON_NULL);
+        Objects.requireNonNull(message, Validator.MESSAGE_NON_NULL);
+        Objects.requireNonNull(userDTO, Validator.USERDTO_NON_NULL);
+        Objects.requireNonNull(securityDataResponseDto, Validator.SECURITY_DATA_NON_NULL);
+
+        return new AuthResponseDTO.Builder(accessToken, message)
+                .userDTO(userDTO)
+                .securityDataResponseDto(securityDataResponseDto)
+                .statusCode("PENDING_SECURITY")
+                .requiresVerification(false)
+                .build();
+    }
+
+    // ERROR - One clear method
+    public static AuthResponseDTO forError(String message) {
+        Objects.requireNonNull(message, Validator.MESSAGE_NON_NULL);
+
+        return new AuthResponseDTO.Builder(null, message)
+                .statusCode("ERROR")
+                .requiresVerification(false)
+                .build();
+    }
+
+    // Factory method for SecurityDataResponseDto
+    public static SecurityDataResponseDto createSecurityDataResponseDto(
+            String securityQuestion,
+            String securityAnswer
+    ) {
+        Objects.requireNonNull(securityQuestion, Validator.SECURITY_QUESTION_NON_NULL);
+        Objects.requireNonNull(securityAnswer, Validator.SECURITY_ANSWER_NON_NULL);
+
+        return new SecurityDataResponseDto.Builder(securityQuestion, securityAnswer)
+                .build();
     }
 }

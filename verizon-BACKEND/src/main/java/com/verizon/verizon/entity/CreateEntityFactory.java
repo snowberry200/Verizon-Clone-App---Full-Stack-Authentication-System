@@ -39,7 +39,9 @@ public class CreateEntityFactory {
                                   String accessToken,
                                   LocalDateTime createdAt,
                                   LocalDateTime lastLogin,
-                                  UserStatus status,
+                                  LocalDateTime verificationTokenExpiry,
+                                  String statusCode,
+                                  String verificationToken,
                                   UserSecurityQuestion userSecurityQuestion,
                                   List<Roles>roles
     )
@@ -49,7 +51,9 @@ public class CreateEntityFactory {
                 .accessToken(accessToken)
                 .createdAt(createdAt)
                 .lastLogin(lastLogin)
-                .status(new ActiveStatus())
+                .statusCode(statusCode)
+                .verificationToken(verificationToken)
+                .verificationTokenExpiry(verificationTokenExpiry)
                 .userSecurityQuestion(userSecurityQuestion)
                 .roles(roles)
                 .build();
