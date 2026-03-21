@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:my_verizon/api_service/api_service.dart';
@@ -97,6 +96,7 @@ class AuthService {
   Future<AuthResponseDTO> signin({
     required String email,
     required String password,
+    required String statusCode,
   }) async {
     // create UserSecurityDataRequestDTO
     UserSecurityDataRequestDTO newUserSecurityDataRequestDTO =
@@ -106,8 +106,10 @@ class AuthService {
         RequestBuilder.forSignIn(
           email: email,
           password: password,
+          statusCode: statusCode,
+
           userSecurityDataRequestDTO: newUserSecurityDataRequestDTO,
-        ).withIsActive(false).build();
+        ).build();
 
     return await apiService.signIn(authRequestDTO);
   }
@@ -117,6 +119,7 @@ class AuthService {
     required String name,
     required String email,
     required String password,
+    required String statusCode,
   }) async {
     // create UserSecurityDataRequestDTO
     UserSecurityDataRequestDTO newUserSecurityDataRequestDTO =
@@ -127,9 +130,11 @@ class AuthService {
               email: email,
               password: password,
               name: name,
+              statusCode: statusCode,
+
               userSecurityDataRequestDTO: newUserSecurityDataRequestDTO,
             )
-            .withIsActive(true) // Sign-up is active by default
+            .withStatusCode(statusCode)
             .withUserSecurityDataRequestDTO(newUserSecurityDataRequestDTO)
             .build();
 
@@ -141,6 +146,7 @@ class AuthService {
     required String email,
     required String securityQuestion,
     required String securityAnswer,
+    required String statusCode,
   }) async {
     final userSecurityDataRequestDTO = UserSecurityDataRequestDTO(
       securityQuestion: securityQuestion,
@@ -148,8 +154,12 @@ class AuthService {
     );
 
     final authRequestDTO =
-        RequestBuilder(email: email, password: '', name: '')
-            .withIsActive(true) // 2FA verification is active by default
+        RequestBuilder.for2FAVerification(
+              email: email,
+              statusCode: statusCode,
+              userSecurityDataRequestDTO: userSecurityDataRequestDTO,
+            )
+            .withStatusCode(statusCode)
             .withUserSecurityDataRequestDTO(userSecurityDataRequestDTO)
             .build();
 

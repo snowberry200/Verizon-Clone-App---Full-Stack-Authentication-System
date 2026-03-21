@@ -2,53 +2,54 @@ import 'package:my_verizon/models/response/security_data_response_dto.dart';
 import 'package:my_verizon/models/entity_dtos/user_dto.dart';
 
 class AuthResponseDTO {
-  final UserDTO user;
+  final UserDTO userDTO;
   final String accessToken;
   final String message;
-  final bool isActive;
+  final String statusCode;
   final bool requiresVerification;
-  final String verificationToken;
+  final String emailVerificationToken;
   final UserSecurityDataResponseDTO? userSecurityDataResponseDTO;
   final DateTime? lastLogin;
   final DateTime? createdAt;
+  final DateTime? verifiedAt;
 
   AuthResponseDTO({
-    required this.user,
+    required this.userDTO,
     required this.accessToken,
     required this.message,
+    required this.statusCode,
     required this.requiresVerification,
-    required this.createdAt,
-    required this.lastLogin,
-    required this.isActive,
-    required this.verificationToken,
-    required this.userSecurityDataResponseDTO,
+    required this.emailVerificationToken,
+    this.userSecurityDataResponseDTO,
+    this.lastLogin,
+    this.createdAt,
+    this.verifiedAt,
   });
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {};
-    data['user'] = user.toJson();
-    data['accessToken'] = accessToken;
-    data['message'] = message;
-    data['isActive'] = isActive;
-    data['requiresVerification'] = requiresVerification;
-    data['verificationToken'] = verificationToken;
-    if (userSecurityDataResponseDTO != null) {
-      data['userSecurityDataResponseDTO'] =
-          userSecurityDataResponseDTO!.toJson();
-    }
-    data['lastLogin'] = lastLogin?.toIso8601String();
-    data['createdAt'] = createdAt?.toIso8601String();
-    return data;
+    return {
+      'user': userDTO.toJson(),
+      'accessToken': accessToken,
+      'message': message,
+      'statusCode': statusCode,
+      'requiresVerification': requiresVerification,
+      'verificationToken': emailVerificationToken,
+      if (userSecurityDataResponseDTO != null)
+        'userSecurityDataResponseDTO': userSecurityDataResponseDTO!.toJson(),
+      if (lastLogin != null) 'lastLogin': lastLogin!.toIso8601String(),
+      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      if (verifiedAt != null) 'verifiedAt': verifiedAt!.toIso8601String(),
+    };
   }
 
   factory AuthResponseDTO.fromJson(Map<String, dynamic> json) {
     return AuthResponseDTO(
-      user: UserDTO.fromJson(json['user']),
-      accessToken: json['accessToken'],
-      message: json['message'],
-      isActive: json['isActive'],
-      requiresVerification: json['requiresVerification'],
-      verificationToken: json['verificationToken'],
+      userDTO: UserDTO.fromJson(json['user']),
+      accessToken: json['accessToken'] ?? '',
+      message: json['message'] ?? '',
+      statusCode: json['statusCode'] ?? '',
+      requiresVerification: json['requiresVerification'] ?? false,
+      emailVerificationToken: json['verificationToken'] ?? '',
       userSecurityDataResponseDTO:
           json['userSecurityDataResponseDTO'] != null
               ? UserSecurityDataResponseDTO.fromJson(
@@ -59,6 +60,10 @@ class AuthResponseDTO {
           json['lastLogin'] != null ? DateTime.parse(json['lastLogin']) : null,
       createdAt:
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      verifiedAt:
+          json['verifiedAt'] != null
+              ? DateTime.parse(json['verifiedAt'])
+              : null,
     );
   }
 }
@@ -67,23 +72,22 @@ class ResponseBuilder {
   UserDTO? _user;
   final String _accessToken;
   final String _message;
-  bool _isActive = false;
+  String _statusCode = '';
   bool _requiresVerification = false;
   String _verificationToken = '';
   UserSecurityDataResponseDTO? _userSecurityDataResponseDTO;
-  DateTime? _lastLogin = DateTime.now();
-  DateTime? _createdAt = DateTime.now();
+  DateTime? _lastLogin;
+  DateTime? _createdAt;
+  DateTime? _verifiedAt;
 
   // Constructor for required primitive params
-
   ResponseBuilder({required String accessToken, required String message})
     : _accessToken = accessToken,
       _message = message;
 
-  // method chaining for required primitive param
-
-  ResponseBuilder withIsActive(bool isActive) {
-    _isActive = isActive;
+  // Method chaining for optional params
+  ResponseBuilder withStatusCode(String statusCode) {
+    _statusCode = statusCode;
     return this;
   }
 
@@ -107,7 +111,12 @@ class ResponseBuilder {
     return this;
   }
 
-  // method chaining for required non- primitive dependent param
+  ResponseBuilder withVerifiedAt(DateTime verifiedAt) {
+    _verifiedAt = verifiedAt;
+    return this;
+  }
+
+  // Method chaining for non-primitive dependent params
   ResponseBuilder withUserSecurityDataResponseDTO(
     UserSecurityDataResponseDTO userSecurityDataResponseDTO,
   ) {
@@ -124,80 +133,72 @@ class ResponseBuilder {
     if (_user == null) {
       throw Exception('User is required');
     }
-    AuthResponseDTO authResponseDTO = AuthResponseDTO(
-      user: _user!,
+    return AuthResponseDTO(
+      userDTO: _user!,
       accessToken: _accessToken,
       message: _message,
+      statusCode: _statusCode,
       requiresVerification: _requiresVerification,
-      verificationToken: _verificationToken,
-      isActive: _isActive,
+      emailVerificationToken: _verificationToken,
+      userSecurityDataResponseDTO: _userSecurityDataResponseDTO,
       lastLogin: _lastLogin,
       createdAt: _createdAt,
-      userSecurityDataResponseDTO: _userSecurityDataResponseDTO,
+      verifiedAt: _verifiedAt,
     );
-    return authResponseDTO;
   }
 
-  // factory method signIn
+  // Factory method for sign in
   factory ResponseBuilder.forSignIn({
     required UserDTO user,
     required String accessToken,
     required String message,
-    required bool isActive,
+    required String statusCode,
     DateTime? lastLogin,
+    DateTime? verifiedAt,
   }) {
-    // SIGNIN RESPONSE OBJECT FOR BUSINESS LOGIC (BLoC architecture)
-    return ResponseBuilder(
-      accessToken: accessToken,
-      message: message,
-    ).withUser(user).withIsActive(isActive).withLastLogin(lastLogin!);
+    return ResponseBuilder(accessToken: accessToken, message: message)
+        .withUser(user)
+        .withStatusCode(statusCode)
+        .withLastLogin(lastLogin ?? DateTime.now())
+        .withVerifiedAt(verifiedAt ?? DateTime.now());
   }
 
-  // factory method signUp
+  // Factory method for sign up
   factory ResponseBuilder.forSignUp({
     required UserDTO user,
     required String message,
     required String verificationToken,
+    required String statusCode,
     UserSecurityDataResponseDTO? userSecurityDataResponseDTO,
     String accessToken = '',
-    bool isActive = false,
     DateTime? createdAt,
+    DateTime? verifiedAt,
   }) {
-    if (userSecurityDataResponseDTO == null) {
-      throw Exception('User Security Data is required for sign up');
-    }
-
-    // SIGNUP RESPONSE OBJECT FOR BUSINESS LOGIC (BLoC architecture)
     return ResponseBuilder(accessToken: accessToken, message: message)
         .withUser(user)
-        .withIsActive(isActive)
+        .withStatusCode(statusCode)
         .withRequiresVerification(true)
         .withVerificationToken(verificationToken)
-        .withUserSecurityDataResponseDTO(userSecurityDataResponseDTO)
-        .withCreatedAt(createdAt ?? DateTime.now());
+        .withCreatedAt(createdAt ?? DateTime.now())
+        .withVerifiedAt(verifiedAt ?? DateTime.now());
   }
 
-  // factory constructor method for 2FA verification
+  // Factory method for 2FA verification
   factory ResponseBuilder.for2FAVerification({
     required UserDTO user,
     required String accessToken,
     required String message,
-    required bool isActive,
+    required String statusCode,
     required String verificationToken,
     UserSecurityDataResponseDTO? userSecurityDataResponseDTO,
     DateTime? lastLogin,
+    DateTime? verifiedAt,
   }) {
-    if (userSecurityDataResponseDTO == null) {
-      throw Exception(
-        'UserSecurityDataResponseDTO is required for 2FA verification',
-      );
-    }
-    // 2FA VERIFICATION RESPONSE OBJECT FOR BUSINESS LOGIC (BLoC architecture)
     return ResponseBuilder(accessToken: accessToken, message: message)
         .withUser(user)
-        .withIsActive(false)
+        .withStatusCode(statusCode)
         .withVerificationToken(verificationToken)
-        .withUserSecurityDataResponseDTO(userSecurityDataResponseDTO)
-        .withLastLogin(lastLogin ?? DateTime.now());
+        .withLastLogin(lastLogin ?? DateTime.now())
+        .withVerifiedAt(verifiedAt ?? DateTime.now());
   }
 }

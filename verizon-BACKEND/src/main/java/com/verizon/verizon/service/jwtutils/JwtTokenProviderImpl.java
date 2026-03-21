@@ -1,20 +1,24 @@
 package com.verizon.verizon.service.jwtutils;
+
+import com.verizon.verizon.InvalidCredentialException;
 import com.verizon.verizon.entity.Roles;
 import com.verizon.verizon.entity.User;
 import com.verizon.verizon.repository.RoleRepository;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.InvalidKeyException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
-public class JwtTokenProviderImpl implements JwtTokenProvider{
+public class JwtTokenProviderImpl implements JwtTokenProvider {
     @Value("${jwt.secret:yourSuperSecretKeyThatIsAtLeast32CharactersLong}")
     private String jwtSecret;
 
@@ -23,7 +27,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider{
 
     RoleRepository roleRepository;
 
-    JwtTokenProviderImpl(RoleRepository roleRepository){
+    JwtTokenProviderImpl(RoleRepository roleRepository) {
         this.roleRepository = roleRepository;
     }
 
@@ -37,7 +41,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider{
     @Override
     public String createAccessToken(User user) {
         try {
-            Map<String,Object> claims = new HashMap<>();
+            Map<String, Object> claims = new HashMap<>();
             claims.put("email", user.getEmail());
             claims.put("userId", user.getId());
             claims.put("roles", user.getRoles().stream().findFirst().map(Roles::getName).orElse("USER"));
@@ -45,7 +49,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider{
                     .setClaims(claims)
                     .setSubject(user.getEmail())
                     .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis()+jwtExpiration))
+                    .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                     .signWith(createSignInKey())
                     .compact();
         } catch (InvalidKeyException e) {
@@ -55,12 +59,12 @@ public class JwtTokenProviderImpl implements JwtTokenProvider{
 
     @Override
     public boolean validateToken(String token) {
-        try{
+        try {
             Jwts.parserBuilder()
                     .setSigningKey(createSignInKey())
                     .build()
                     .parseClaimsJws(token);
-        return true;
+            return true;
         } catch (RuntimeException e) {
             return false;
         }
@@ -96,7 +100,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider{
     @Override
     public Roles extractRoleFromToken(String token) {
         try {
-             String roleName = Jwts.parserBuilder()
+            String roleName = Jwts.parserBuilder()
                     .setSigningKey(createSignInKey())
                     .build()
                     .parseClaimsJws(token)
@@ -121,5 +125,26 @@ public class JwtTokenProviderImpl implements JwtTokenProvider{
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24 hours
                 .signWith(createSignInKey())
                 .compact();
+    }
+
+    // VALIDATE VERIFICATION TOKEN - FIXED VERSION
+    public String validateVerificationToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(createSignInKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            // Verify it's a verification token
+            if (!"VERIFICATION_TOKEN".equals(claims.get("type"))) {
+                throw new RuntimeException("Invalid token type");
+            }
+
+            return claims.getSubject(); // Returns email
+        } catch (ExpiredJwtException e) {
+            throw new RuntimeException("Verification token has expired");
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid verification token");
+        }
     }
 }

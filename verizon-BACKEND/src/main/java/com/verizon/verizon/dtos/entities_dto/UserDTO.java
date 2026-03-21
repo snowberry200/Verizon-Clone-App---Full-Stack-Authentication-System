@@ -3,10 +3,6 @@ package com.verizon.verizon.dtos.entities_dto;
 import com.verizon.verizon.entity.Roles;
 import com.verizon.verizon.entity.User;
 import com.verizon.verizon.entity.UserSecurityQuestion;
-import com.verizon.verizon.userstatuses.NonActiveStatus;
-import com.verizon.verizon.userstatuses.UserStatus;
-import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +18,7 @@ public class UserDTO {
     private final LocalDateTime lastLogin;
     public List<RolesDTO> rolesDTOS;
     private String accessToken;
-    private String verificationToken;
+    private final String verificationToken;
     private LocalDateTime verificationTokenExpiry;
     private LocalDateTime verifiedAt;
 
@@ -76,6 +72,9 @@ public class UserDTO {
         return lastLogin;
     }
 
+    public String getStatusCode() {
+        return statusCode;
+    }
     public List<RolesDTO> getRolesDTOS() {
         return rolesDTOS;
     }

@@ -4,14 +4,14 @@ class AuthRequestDTO {
   final String email;
   final String password;
   final String name;
-  final bool isActive;
+  final String statusCode;
   final UserSecurityDataRequestDTO? userSecurityDataRequestDTO;
 
-  AuthRequestDTO(
-    this.isActive, {
+  AuthRequestDTO({
     required this.email,
     required this.password,
     required this.name,
+    required this.statusCode,
     this.userSecurityDataRequestDTO,
   });
 
@@ -20,7 +20,7 @@ class AuthRequestDTO {
     data['email'] = email;
     data['password'] = password;
     data['name'] = name;
-    data['isActive'] = isActive;
+    data['statusCode'] = statusCode;
     if (userSecurityDataRequestDTO != null) {
       data['userSecurityDataRequestDTO'] = userSecurityDataRequestDTO!.toJson();
     }
@@ -32,7 +32,7 @@ class RequestBuilder {
   final String _email;
   final String _password;
   final String _name;
-  bool _isActive = false;
+  String _statusCode = '';
   UserSecurityDataRequestDTO? _userSecurityDataRequestDTO;
 
   // Constructor for required primitive params
@@ -45,8 +45,8 @@ class RequestBuilder {
        _name = name;
 
   // method chaining for optional  params
-  RequestBuilder withIsActive(bool isActive) {
-    _isActive = isActive;
+  RequestBuilder withStatusCode(String statusCode) {
+    _statusCode = statusCode;
     return this;
   }
 
@@ -63,11 +63,11 @@ class RequestBuilder {
       throw Exception('UserSecurityDataRequestDTO is required');
     }
     return AuthRequestDTO(
-      _isActive,
       email: _email,
       password: _password,
       name: _name,
       userSecurityDataRequestDTO: _userSecurityDataRequestDTO,
+      statusCode: _statusCode,
     );
   }
 
@@ -75,11 +75,12 @@ class RequestBuilder {
   factory RequestBuilder.forSignIn({
     required String email,
     required String password,
+    required String statusCode,
     required UserSecurityDataRequestDTO userSecurityDataRequestDTO,
   }) {
     // SIGNIN REQUEST OBJECT FOR AUTHSERVICE USE
     return RequestBuilder(email: email, password: password, name: '')
-        .withIsActive(false) // Sign-in is inactive by default
+        .withStatusCode(statusCode)
         .withUserSecurityDataRequestDTO(userSecurityDataRequestDTO);
   }
   // factory construction for sign up
@@ -87,21 +88,24 @@ class RequestBuilder {
     required String email,
     required String password,
     required String name,
+    required String statusCode,
+
     required UserSecurityDataRequestDTO userSecurityDataRequestDTO,
   }) {
     // SIGNUP REQUEST OBJECT FOR AUTHSERVICE USE
     return RequestBuilder(email: email, password: password, name: name)
-        .withIsActive(true) // Sign-up is active by default
+        .withStatusCode(statusCode)
         .withUserSecurityDataRequestDTO(userSecurityDataRequestDTO);
   }
   // factory constructor method for 2FA verification
   factory RequestBuilder.for2FAVerification({
     required String email,
+    required String statusCode,
     required UserSecurityDataRequestDTO userSecurityDataRequestDTO,
   }) {
     // 2FA VERIFICATION REQUEST OBJECT FOR AUTHSERVICE USE
     return RequestBuilder(email: email, password: '', name: '')
-        .withIsActive(true) // 2FA verification is active by default
+        .withStatusCode(statusCode)
         .withUserSecurityDataRequestDTO(userSecurityDataRequestDTO);
   }
 }

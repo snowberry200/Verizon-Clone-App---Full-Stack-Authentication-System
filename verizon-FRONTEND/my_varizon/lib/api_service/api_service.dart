@@ -6,7 +6,12 @@ import 'package:my_verizon/models/response/auth_response_dto.dart';
 
 class ApiService {
   final http.Client client;
-  final baseUrl = "https://localhost:8080/api/auth";
+  final baseUrl =
+      Platform.isAndroid
+          ? "http://10.0.2.2:8080/api/auth" // Android emulator
+          : Platform.isIOS
+          ? "http://localhost:8080/api/auth" // iOS simulator
+          : "https://... -api.com/api/auth"; // Production
 
   ApiService({http.Client? client}) : client = client ?? http.Client();
 

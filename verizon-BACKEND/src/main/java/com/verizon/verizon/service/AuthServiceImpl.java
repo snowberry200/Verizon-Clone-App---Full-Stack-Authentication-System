@@ -13,7 +13,7 @@ import com.verizon.verizon.repository.SecurityQuestionRepository;
 import com.verizon.verizon.repository.UserRepository;
 import com.verizon.verizon.repository.UserSecurityQuestionRepository;
 import com.verizon.verizon.service.jwtutils.JwtTokenProviderImpl;
-import com.verizon.verizon.userstatuses.ActiveStatus;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +22,6 @@ import java.util.List;
 
 @Service
 public class AuthServiceImpl implements AuthService {
-
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -45,10 +44,6 @@ public class AuthServiceImpl implements AuthService {
         this.jwtTokenProviderImpl = jwtTokenProviderImpl;
     }
 
-    private String generateVerificationToken(User user) {
-        // Implement your verification token generation logic
-        return jwtTokenProviderImpl.createVerificationToken(user);
-    }
 
     // REGISTRATION
     @Override
@@ -89,7 +84,11 @@ public class AuthServiceImpl implements AuthService {
                 .userSecurityQuestion(savedUserSecurityQuestion)
                 .roles(List.of(defaultRole))
                 .build();
-
+        // ✅ Generate verification token USING the user
+        String emailVerificationToken = jwtTokenProviderImpl.createVerificationToken(user);
+        // ✅ Set token on user
+        user.setVerificationToken(emailVerificationToken);
+        user.setVerificationTokenExpiry(LocalDateTime.now().plusHours(24));
         // Establish bidirectional relationships
         defaultRole.addSingleUserInRole(user);
         savedUserSecurityQuestion.addSingleUser(user);
@@ -97,8 +96,6 @@ public class AuthServiceImpl implements AuthService {
         // Save user to database
         User savedUser = userRepository.save(user);
 
-        // CREATE ACCESS-TOKEN
-        String accessToken = jwtTokenProviderImpl.createAccessToken(savedUser);
         String message = "Registration successful, please Login to your new account";
 
         // Create SecurityDataResponseDto
@@ -107,11 +104,11 @@ public class AuthServiceImpl implements AuthService {
                 "Security answer has been saved successfully"
         );
 
-        return new AuthResponseDTO.Builder(accessToken, message)
+        return new AuthResponseDTO.Builder(message)
                 .statusCode(Validator.NONACTIVE)
                 .requiresVerification(true)
                 .userDTO(UserDTO.convertToUserDTO(savedUser))
-                .verificationToken(generateVerificationToken(savedUser))
+                .emailVerificationToken(emailVerificationToken)
                 .createdAt(savedUser.getCreatedAt())
                 .securityDataResponseDto(securityDataResponseDto)
                 .build();
@@ -145,13 +142,21 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialException("Registration incomplete");
         }
 
+        // Create SecurityDataResponseDto
+        SecurityDataResponseDto securityDataResponseDto = AuthResAndSecDTOFactory.createSecurityDataResponseDto(
+                user.getUserSecurityQuestion().getQuestion().getQuestionText(),
+                "Security question verified"
+        );
+
         // Generate access token
         String tempToken = jwtTokenProviderImpl.createAccessToken(user);
 
         // Build response
-        return new AuthResponseDTO.Builder(tempToken, message)
+        return new AuthResponseDTO.Builder(message)
                 .statusCode(Validator.ACTIVE)
                 .userDTO(UserDTO.convertToUserDTO(user))
+                .accessToken(tempToken)
+                .securityDataResponseDto(securityDataResponseDto)
                 .lastLogin(LocalDateTime.now())
                 .build();
     }
@@ -182,7 +187,7 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         // Generate token
-        String token = jwtTokenProviderImpl.createAccessToken(user);
+        String accessToken = jwtTokenProviderImpl.createAccessToken(user);
         String message = "Welcome to Verizon";
 
         // Create security response DTO
@@ -193,21 +198,92 @@ public class AuthServiceImpl implements AuthService {
                         "Security answer verified successfully"
                 ).build();
 
-        return new AuthResponseDTO.Builder(token, message)
+        return new AuthResponseDTO.Builder(message)
                 .userDTO(UserDTO.convertToUserDTO(user))
                 .securityDataResponseDto(securityDataResponseDto)
                 .statusCode(Validator.ACTIVE)
+                .accessToken(accessToken)
                 .build();
     }
 
+    // EMAIL VERIFICATION - IMPLEMENT THIS!
     @Override
+    @Transactional
     public AuthResponseDTO verifyEmail(String token) {
-        return null;
+        // Validate token and get user
+        String email = jwtTokenProviderImpl.validateVerificationToken(token);
+
+        // Find user by email
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new InvalidCredentialException("Invalid verification token"));
+
+        // Check if already verified
+        if (Validator.ACTIVE.equals(user.getStatusCode())) {
+            throw new InvalidCredentialException("Account already verified");
+        }
+
+        // Check token expiry
+        if (user.getVerificationTokenExpiry() != null &&
+                user.getVerificationTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new InvalidCredentialException("Verification token has expired");
+        }
+
+        // Activate user
+        user.setStatusCode(Validator.ACTIVE);
+        user.setVerifiedAt(LocalDateTime.now());
+        user.setVerificationToken(null);
+        user.setVerificationTokenExpiry(null);
+
+        User savedUser = userRepository.save(user);
+
+        // Generate access token (NOW they can log in!)
+        String accessToken = jwtTokenProviderImpl.createAccessToken(savedUser);
+
+        // Create SecurityDataResponseDto
+        SecurityDataResponseDto securityDataResponseDto = AuthResAndSecDTOFactory.createSecurityDataResponseDto(
+                savedUser.getUserSecurityQuestion().getQuestion().getQuestionText(),
+                "Email verified successfully"
+        );
+
+        // Return response WITH access token
+        return new AuthResponseDTO.Builder("Email verified successfully! You can now log in.")
+                .accessToken(accessToken)
+                .userDTO(UserDTO.convertToUserDTO(savedUser))
+                .securityDataResponseDto(securityDataResponseDto)
+                .statusCode(Validator.ACTIVE)
+                .requiresVerification(false)
+                .verifiedAt(LocalDateTime.now())
+                .lastLogin(LocalDateTime.now())
+                .build();
     }
 
+    // RESEND VERIFICATION EMAIL - IMPLEMENT THIS!
     @Override
+    @Transactional
     public AuthResponseDTO resendVerificationEmail(String email) {
-        return null;
+        // Find user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new InvalidCredentialException("User not found with email: " + email));
+
+        // Check if already verified
+        if (Validator.ACTIVE.equals(user.getStatusCode())) {
+            throw new InvalidCredentialException("Account already verified");
+        }
+
+        // ✅ Generate new verification token USING the user (not null!)
+        String newToken = jwtTokenProviderImpl.createVerificationToken(user);
+        user.setVerificationToken(newToken);
+        user.setVerificationTokenExpiry(LocalDateTime.now().plusHours(24));
+
+        userRepository.save(user);
+
+        // Return response with new token
+        return new AuthResponseDTO.Builder("Verification email sent successfully!")
+                .userDTO(UserDTO.convertToUserDTO(user))
+                .statusCode(Validator.NONACTIVE)
+                .requiresVerification(true)
+                .emailVerificationToken(newToken)
+                .build();
     }
 
 

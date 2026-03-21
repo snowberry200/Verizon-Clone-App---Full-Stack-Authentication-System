@@ -4,7 +4,6 @@ import com.verizon.verizon.dtos.entities_dto.UserDTO;
 import jakarta.annotation.Nullable;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 public class AuthResponseDTO {
     private final UserDTO userDTO;
@@ -12,155 +11,138 @@ public class AuthResponseDTO {
     private final String message;
     private final String statusCode;
     private final boolean requiresVerification;
-    private final String verificationToken;
+    private final String emailVerificationToken;
     private final SecurityDataResponseDto securityDataResponseDto;
     private final LocalDateTime createdAt;
     private final LocalDateTime lastLogin;
-
-
     private final LocalDateTime verifiedAt;
 
-   public AuthResponseDTO(Builder builder){
+    public AuthResponseDTO(Builder builder) {
         this.userDTO = builder.userDTO;
         this.accessToken = builder.accessToken;
         this.message = builder.message;
         this.statusCode = builder.statusCode;
         this.requiresVerification = builder.requiresVerification;
-        this.verificationToken = builder.verificationToken;
+        this.emailVerificationToken = builder.emailVerificationToken;
         this.createdAt = builder.createdAt;
-        this.lastLogin =  builder.lastLogin;
+        this.lastLogin = builder.lastLogin;
         this.securityDataResponseDto = builder.securityDataResponseDto;
         this.verifiedAt = builder.verifiedAt;
     }
 
+    // Getters
+    public String getStatusCode() { return statusCode; }
+    public UserDTO getUserDTO() { return userDTO; }
+    public String getAccessToken() { return accessToken; }
+    public String getMessage() { return message; }
+    public SecurityDataResponseDto getSecurityDataResponseDto() { return securityDataResponseDto; }
+    @Nullable public LocalDateTime getLastLogin() { return lastLogin; }
+    public boolean isRequiresVerification() { return requiresVerification; }
+    public LocalDateTime getVerifiedAt() { return verifiedAt; }
+    public String getEmailVerificationToken() { return emailVerificationToken; }
+    @Nullable public LocalDateTime getCreatedAt() { return createdAt; }
 
-    public String getStatusCode() {
-        return statusCode;
-    }
-
-    public UserDTO getUserDTO() {
-        return userDTO;
-    }
-
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public SecurityDataResponseDto getSecurityDataResponseDto() {
-        return securityDataResponseDto;
-    }
-
-    @Nullable
-    public LocalDateTime getLastLogin() {
-        return lastLogin;
-    }
-
-    public boolean isRequiresVerification() {
-        return requiresVerification;
-    }
-    public LocalDateTime getVerifiedAt() {
-        return verifiedAt;
-    }
-
-    public String getVerificationToken() {
-        return verificationToken;
-    }
-
-    @Nullable
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-
-
-    public static class Builder{
-        // required primitive params
-        private final String accessToken;
+    public static class Builder {
+        // Required - always present
         private final String message;
 
-        // non-primitive dependent required param
-        private  UserDTO userDTO;
-        private  SecurityDataResponseDto securityDataResponseDto;
+        // Required non-primitive (must be set)
+        private UserDTO userDTO;
+        private SecurityDataResponseDto securityDataResponseDto;
 
-        // optional params
-        private  String statusCode;
-        private  boolean requiresVerification ;
-        private  String verificationToken;
+        // Optional fields
+        private String accessToken;
+        private String statusCode;
+        private boolean requiresVerification;
+        private String emailVerificationToken;
         private LocalDateTime verifiedAt;
-        @Nullable
-        private  LocalDateTime createdAt ;
-        @Nullable
-        private  LocalDateTime lastLogin;
+        private LocalDateTime createdAt;
+        private LocalDateTime lastLogin;
 
-        // constructor
-        public Builder (String accessToken, String message){
-            // FOR REQUIRED PARAMS
-            // Validate required primitives
-            this.accessToken = Objects.requireNonNull(accessToken, "Access token cannot be null");
-            this.message = Objects.requireNonNull(message, "Message cannot be null");
+        // Constructor - only message is required
+        public Builder(String message) {
+            // Validate required message
+            if (message == null || message.trim().isEmpty()) {
+                throw new IllegalArgumentException("Message cannot be null or empty");
+            }
+            this.message = message;
 
-            // FOR OPTIONAL PRIMITIVE PARAMS
+            // Set defaults for optional fields
+            this.accessToken = null;                    // ✅ No token by default
             this.statusCode = "NONACTIVE";
             this.requiresVerification = false;
-            this.verificationToken = "";
+            this.emailVerificationToken = null;         // ✅ No token by default
+            this.verifiedAt = null;
             this.createdAt = LocalDateTime.now();
-            this.lastLogin = LocalDateTime.now();
-
-            //non-primitive dependent required param - NOT FINAL (set via builder methods).
-            // Thus :  userDTO and  securityDataResponseDto
+            this.lastLogin = null;                      // ✅ No login by default
         }
 
-        // factory methods for optional params
-        public Builder statusCode (String statusCode){
+        // Builder methods for optional fields
+        public Builder accessToken(String accessToken) {
+            this.accessToken = accessToken;
+            return this;
+        }
+
+        public Builder statusCode(String statusCode) {
             this.statusCode = statusCode;
             return this;
         }
-        public Builder requiresVerification (boolean requiresVerification){
+
+        public Builder requiresVerification(boolean requiresVerification) {
             this.requiresVerification = requiresVerification;
             return this;
         }
-        public Builder verificationToken (String verificationToken){
-            this.verificationToken = verificationToken;
+
+        public Builder emailVerificationToken(String emailVerificationToken) {
+            this.emailVerificationToken = emailVerificationToken;
             return this;
         }
-        public Builder createdAt (LocalDateTime createdAt){
-            this.createdAt = createdAt;
-            return this;
-        }
+
         public Builder verifiedAt(LocalDateTime verifiedAt) {
             this.verifiedAt = verifiedAt;
             return this;
         }
-        public Builder lastLogin (LocalDateTime lastLogin){
+
+        public Builder createdAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
+            return this;
+        }
+
+        public Builder lastLogin(LocalDateTime lastLogin) {
             this.lastLogin = lastLogin;
             return this;
         }
 
-        // method chain for non-primitive dependent required param
-        public Builder userDTO(UserDTO userDTO){
-          this.userDTO = userDTO;
-          return this;
-
+        public Builder userDTO(UserDTO userDTO) {
+            this.userDTO = userDTO;
+            return this;
         }
 
-        public Builder securityDataResponseDto(SecurityDataResponseDto securityDataResponseDto){
+        public Builder securityDataResponseDto(SecurityDataResponseDto securityDataResponseDto) {
             this.securityDataResponseDto = securityDataResponseDto;
             return this;
         }
-        public AuthResponseDTO build(){
-            // VALIDATE required non-primitive fields were set
+
+        public AuthResponseDTO build() {
+            // Validate required non-primitive fields
             if (userDTO == null) {
                 throw new IllegalStateException("UserDTO is required but was never set");
             }
             if (securityDataResponseDto == null) {
                 throw new IllegalStateException("SecurityDataResponseDto is required but was never set");
             }
+
+            // ✅ Validate business logic
+            if (requiresVerification && (emailVerificationToken == null || emailVerificationToken.isEmpty())) {
+                throw new IllegalStateException("Email verification token is required when requiresVerification is true");
+            }
+
+            if ("ACTIVE".equals(statusCode) && verifiedAt == null) {
+                // Optional warning: active users should have verifiedAt
+                // Not required to throw, just a business logic suggestion
+            }
+
             return new AuthResponseDTO(this);
         }
-
     }
 }

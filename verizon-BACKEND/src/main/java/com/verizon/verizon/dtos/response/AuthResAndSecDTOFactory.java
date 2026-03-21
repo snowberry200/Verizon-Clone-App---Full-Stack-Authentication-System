@@ -1,5 +1,4 @@
 package com.verizon.verizon.dtos.response;
-
 import com.verizon.verizon.constant.Validator;
 import com.verizon.verizon.dtos.entities_dto.UserDTO;
 import java.time.LocalDateTime;
@@ -23,7 +22,8 @@ public class AuthResAndSecDTOFactory {
         Objects.requireNonNull(message, Validator.MESSAGE_NON_NULL);
         Objects.requireNonNull(userDTO, Validator.USERDTO_NON_NULL);
 
-        return new AuthResponseDTO.Builder(accessToken, message)
+        return new AuthResponseDTO.Builder(message)
+                .accessToken(accessToken)  // ✅ Add accessToken
                 .userDTO(userDTO)
                 .statusCode(Validator.ACTIVE)
                 .requiresVerification(false)
@@ -41,15 +41,15 @@ public class AuthResAndSecDTOFactory {
         Objects.requireNonNull(userDTO, Validator.USERDTO_NON_NULL);
         Objects.requireNonNull(securityDataResponseDto, Validator.SECURITY_DATA_NON_NULL);
 
-        // Generate verification token
-        String verificationToken = UUID.randomUUID().toString();
+        // ✅ Generate verification token
+        String emailVerificationToken = UUID.randomUUID().toString();
 
-        return new AuthResponseDTO.Builder(null, message)  // No access token yet
+        return new AuthResponseDTO.Builder(message)
                 .userDTO(userDTO)
                 .securityDataResponseDto(securityDataResponseDto)
                 .statusCode(Validator.NONACTIVE)
                 .requiresVerification(true)
-                .verificationToken(verificationToken)
+                .emailVerificationToken(emailVerificationToken)  // ✅ Pass the generated token
                 .createdAt(LocalDateTime.now())
                 .build();
     }
@@ -66,11 +66,13 @@ public class AuthResAndSecDTOFactory {
         Objects.requireNonNull(userDTO, Validator.USERDTO_NON_NULL);
         Objects.requireNonNull(securityDataResponseDto, Validator.SECURITY_DATA_NON_NULL);
 
-        return new AuthResponseDTO.Builder(accessToken, message)
+        return new AuthResponseDTO.Builder(message)
+                .accessToken(accessToken)  // ✅ Add accessToken
                 .userDTO(userDTO)
                 .securityDataResponseDto(securityDataResponseDto)
                 .statusCode(Validator.ACTIVE)
                 .requiresVerification(false)
+                .verifiedAt(LocalDateTime.now())  // ✅ Add verified timestamp
                 .lastLogin(LocalDateTime.now())
                 .build();
     }
@@ -87,7 +89,8 @@ public class AuthResAndSecDTOFactory {
         Objects.requireNonNull(userDTO, Validator.USERDTO_NON_NULL);
         Objects.requireNonNull(securityDataResponseDto, Validator.SECURITY_DATA_NON_NULL);
 
-        return new AuthResponseDTO.Builder(accessToken, message)
+        return new AuthResponseDTO.Builder(message)
+                .accessToken(accessToken)  // ✅ Add accessToken
                 .userDTO(userDTO)
                 .securityDataResponseDto(securityDataResponseDto)
                 .statusCode("PENDING_SECURITY")
@@ -99,7 +102,7 @@ public class AuthResAndSecDTOFactory {
     public static AuthResponseDTO forError(String message) {
         Objects.requireNonNull(message, Validator.MESSAGE_NON_NULL);
 
-        return new AuthResponseDTO.Builder(null, message)
+        return new AuthResponseDTO.Builder(message)
                 .statusCode("ERROR")
                 .requiresVerification(false)
                 .build();

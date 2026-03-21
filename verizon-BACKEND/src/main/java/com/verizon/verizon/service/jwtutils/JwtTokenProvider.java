@@ -19,4 +19,6 @@ public interface JwtTokenProvider{
     Roles extractRoleFromToken(String token);
     // g. verification Token
     String createVerificationToken(User user);
+    // h. validate verification Token
+    String validateVerificationToken(String token);
 }

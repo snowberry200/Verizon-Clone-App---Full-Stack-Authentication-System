@@ -4,8 +4,11 @@ class UserDTO {
   final int id;
   final String name;
   final String email;
+  final String statusCode;
   final String? role;
-  final bool isActive;
+  final String verificationToken;
+  final DateTime verificationTokenExpiry;
+  final DateTime verifiedAt;
   final UserSecurityQuestionDTO userSecurityQuestionDTO;
   final String accessToken;
   final DateTime? createdAt;
@@ -16,11 +19,14 @@ class UserDTO {
     required this.name,
     required this.email,
     required this.role,
-    required this.isActive,
     this.createdAt,
     this.lastLogin,
     required this.userSecurityQuestionDTO,
     required this.accessToken,
+    required this.statusCode,
+    required this.verificationToken,
+    required this.verificationTokenExpiry,
+    required this.verifiedAt,
   });
 
   // Factory method for creating a UserDTO from JSON
@@ -30,7 +36,6 @@ class UserDTO {
       name: json['name'],
       email: json['email'],
       role: json['role'],
-      isActive: json['isActive'],
       createdAt:
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       lastLogin:
@@ -39,6 +44,16 @@ class UserDTO {
         json['userSecurityQuestion'],
       ),
       accessToken: json['accessToken'] ?? '',
+      statusCode: json['statusCode'] ?? '',
+      verificationToken: json['verificationToken'],
+      verificationTokenExpiry:
+          json['verificationTokenExpiry'] != null
+              ? DateTime.parse(json['verificationTokenExpiry'])
+              : DateTime.now(), // or handle null appropriately
+      verifiedAt:
+          json['verifiedAt'] != null
+              ? DateTime.parse(json['verifiedAt'])
+              : DateTime.now(), // or handle null appropriately
     );
   }
 
@@ -48,8 +63,8 @@ class UserDTO {
     data['id'] = id;
     data['name'] = name;
     data['email'] = email;
+    data['statusCode'] = statusCode;
     data['role'] = role;
-    data['isActive'] = isActive;
     if (createdAt != null) {
       data['createdAt'] = createdAt!.toIso8601String();
     }
@@ -57,6 +72,9 @@ class UserDTO {
       data['lastLogin'] = lastLogin!.toIso8601String();
     }
     data['userSecurityQuestion'] = userSecurityQuestionDTO.toJson();
+    data['verificationToken'] = verificationToken;
+    data['verificationTokenExpiry'] = verificationTokenExpiry.toIso8601String();
+    data['verifiedAt'] = verifiedAt.toIso8601String();
     data['accessToken'] = accessToken;
     return data;
   }
