@@ -1,4 +1,5 @@
 package com.verizon.verizon.security;
+
 import com.verizon.verizon.service.jwtutils.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,14 +13,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.List;
 
 @Configuration
-public class SecurityConfigurationImpl implements SecurityConfigurations{
+public class SecurityConfigurationImpl implements SecurityConfigurations {
     private final JwtAuthenticationFilter jwtAuthFilter;
-    SecurityConfigurationImpl(JwtAuthenticationFilter jwtAuthFilter){
+
+    SecurityConfigurationImpl(JwtAuthenticationFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
     }
+
     @Override
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) {
@@ -122,7 +126,7 @@ public class SecurityConfigurationImpl implements SecurityConfigurations{
                         "http://127.0.0.1:5555",  // Flutter web alternative
                         "http://localhost",        // Flutter web
                         "http://127.0.0.1",
-                        "http://localhost:59974" // Flutter web alternative
+                        "http://localhost:56818" // Flutter web alternative
                 ));
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"

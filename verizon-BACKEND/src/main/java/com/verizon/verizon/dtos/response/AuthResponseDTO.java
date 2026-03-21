@@ -31,16 +31,47 @@ public class AuthResponseDTO {
     }
 
     // Getters
-    public String getStatusCode() { return statusCode; }
-    public UserDTO getUserDTO() { return userDTO; }
-    public String getAccessToken() { return accessToken; }
-    public String getMessage() { return message; }
-    public SecurityDataResponseDto getSecurityDataResponseDto() { return securityDataResponseDto; }
-    @Nullable public LocalDateTime getLastLogin() { return lastLogin; }
-    public boolean isRequiresVerification() { return requiresVerification; }
-    public LocalDateTime getVerifiedAt() { return verifiedAt; }
-    public String getEmailVerificationToken() { return emailVerificationToken; }
-    @Nullable public LocalDateTime getCreatedAt() { return createdAt; }
+    public String getStatusCode() {
+        return statusCode;
+    }
+
+    public UserDTO getUserDTO() {
+        return userDTO;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public SecurityDataResponseDto getSecurityDataResponseDto() {
+        return securityDataResponseDto;
+    }
+
+    @Nullable
+    public LocalDateTime getLastLogin() {
+        return lastLogin;
+    }
+
+    public boolean isRequiresVerification() {
+        return requiresVerification;
+    }
+
+    public LocalDateTime getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public String getEmailVerificationToken() {
+        return emailVerificationToken;
+    }
+
+    @Nullable
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 
     public static class Builder {
         // Required - always present
@@ -74,7 +105,7 @@ public class AuthResponseDTO {
             this.emailVerificationToken = null;         // ✅ No token by default
             this.verifiedAt = null;
             this.createdAt = LocalDateTime.now();
-            this.lastLogin = null;                      // ✅ No login by default
+            this.lastLogin = null;                      // ✅ No loginRecord by default
         }
 
         // Builder methods for optional fields
@@ -138,8 +169,10 @@ public class AuthResponseDTO {
             }
 
             if ("ACTIVE".equals(statusCode) && verifiedAt == null) {
-                // Optional warning: active users should have verifiedAt
-                // Not required to throw, just a business logic suggestion
+                throw new IllegalStateException(
+                        "User with status 'ACTIVE' must have a verifiedAt timestamp. " +
+                                "Please set verifiedAt or use a different status code."
+                );
             }
 
             return new AuthResponseDTO(this);

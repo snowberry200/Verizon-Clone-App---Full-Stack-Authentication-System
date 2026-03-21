@@ -37,7 +37,7 @@ public class User {
 
     @Column(nullable = true)
     private LocalDateTime verifiedAt;
-    @Column(nullable = false)
+    @Column(name = "status_code", nullable = false)
     private String statusCode;
     @Transient
     private UserStatusContext userStatusContext;

@@ -1,17 +1,27 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:my_verizon/models/request/auth_request_dto.dart';
 import 'package:my_verizon/models/response/auth_response_dto.dart';
 
 class ApiService {
   final http.Client client;
-  final baseUrl =
-      Platform.isAndroid
-          ? "http://10.0.2.2:8080/api/auth" // Android emulator
-          : Platform.isIOS
-          ? "http://localhost:8080/api/auth" // iOS simulator
-          : "https://... -api.com/api/auth"; // Production
+  static String get baseUrl {
+    if (kIsWeb) {
+      // For web development
+      return const String.fromEnvironment(
+        'API_URL',
+        defaultValue: 'http://localhost:8080/api/auth',
+      );
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8080/api/auth';
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return 'http://localhost:8080/api/auth';
+    } else {
+      return 'https://your-production-api.com/api/auth';
+    }
+  }
 
   ApiService({http.Client? client}) : client = client ?? http.Client();
 
