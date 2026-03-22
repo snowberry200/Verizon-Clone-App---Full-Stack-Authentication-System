@@ -5,8 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_verizon/bloc/auth_bloc.dart';
 import 'package:my_verizon/bloc/auth_event.dart';
 import 'package:my_verizon/bloc/auth_state.dart';
-import 'package:my_verizon/signin_form/checkbox.dart';
-import 'package:my_verizon/signin_form/shared_data.dart';
 import 'package:my_verizon/homepage/homepage.dart';
 import 'package:my_verizon/layout/layout.dart';
 import 'package:my_verizon/question_widget.dart/question_page.dart';
@@ -15,6 +13,8 @@ import 'package:my_verizon/registration_form/name_textfield.dart';
 import 'package:my_verizon/registration_form/password_text_fields.dart';
 import 'package:my_verizon/registration_form/security_answer_form_field.dart';
 import 'package:my_verizon/registration_form/security_question_form_field.dart';
+import 'package:my_verizon/signin_form/checkbox.dart';
+import 'package:my_verizon/signin_form/shared_data.dart';
 import 'package:my_verizon/signin_form/sign_in_button.dart';
 import 'package:my_verizon/widgets/text_group.dart';
 import 'package:my_verizon/widgets/text_widget.dart';
@@ -129,6 +129,7 @@ class _FormWidgetState extends State<FormWidget> {
   }
 
   FormPage formPage = FormPage();
+
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
@@ -236,158 +237,154 @@ class _FormWidgetState extends State<FormWidget> {
         return Form(
           key: formKey,
           autovalidateMode: AutovalidateMode.disabled,
-          child: SingleChildScrollView(
-            physics: BouncingScrollPhysics(),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment:
-                  LayOutWidget.isMobile(context)
-                      ? CrossAxisAlignment.start
-                      : CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LayOutWidget.isMobile(context)
-                    ? SizedBox(height: 0)
-                    : SizedBox(height: 80),
-                TextWidget(),
-                const SizedBox(height: 20),
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      'User ID or verizon mobile number',
-                      style: TextStyle(
-                        color: CupertinoColors.black,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w100,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment:
+                      LayOutWidget.isMobile(context)
+                          ? CrossAxisAlignment.start
+                          : CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!LayOutWidget.isMobile(context))
+                      const SizedBox(height: 80),
+                    const TextWidget(),
+                    const SizedBox(height: 20),
+                    const Align(
+                      alignment: Alignment.topLeft,
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: 8.0),
+                        child: Text(
+                          'User ID or verizon mobile number',
+                          style: TextStyle(
+                            color: CupertinoColors.black,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w100,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-
-                EmailTextField(loginController: loginController),
-                SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      'Password',
-                      style: TextStyle(
-                        color: CupertinoColors.black,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w100,
+                    EmailTextField(loginController: loginController),
+                    SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
+                    const Align(
+                      alignment: Alignment.topLeft,
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: 8.0),
+                        child: Text(
+                          'Password',
+                          style: TextStyle(
+                            color: CupertinoColors.black,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w100,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-
-                PasswordTextField(passwordController: passwordController),
-                SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      'Name',
-                      style: TextStyle(
-                        color: CupertinoColors.black,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w100,
+                    PasswordTextField(passwordController: passwordController),
+                    SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
+                    const Align(
+                      alignment: Alignment.topLeft,
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: 8.0),
+                        child: Text(
+                          'Name',
+                          style: TextStyle(
+                            color: CupertinoColors.black,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w100,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-
-                if (state.isSignUpMode) ...[
-                  NameTextFormWidget(nameController: nameController),
-                  const SizedBox(height: 10),
-                  SecurityQuestionFormField(
-                    items: securityQuestions,
-                    onQuestionSelected: (value) {
-                      setState(() {
-                        selectedSecurityQuestion = value;
-                      });
-                    },
-                  ),
-
-                  const SizedBox(height: 10),
-                  SecurityAnswerFormField(
-                    securityAnswerController: securityAnswerController,
-                  ),
-                  const SizedBox(height: 10),
-                ],
-                SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
-                state.isSignUpMode ? SizedBox.shrink() : CheckboxWidget(),
-                SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: SizedBox(
-                    width:
-                        LayOutWidget.isMobile(context)
-                            ? width / 4
-                            : LayOutWidget.isDesktop(context)
-                            ? width / 8
-                            : LayOutWidget.isTablet(context)
-                            ? width / 6
-                            : width / 4,
-
-                    child:
-                        state.isLoading
-                            ? SizedBox(
-                              height: 50,
-                              child: Center(
-                                child: SizedBox(
-                                  width: 30,
-                                  height: 30,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.0,
-                                    strokeCap: StrokeCap.round,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      CupertinoColors.systemBlue,
+                    if (state.isSignUpMode) ...[
+                      NameTextFormWidget(nameController: nameController),
+                      const SizedBox(height: 10),
+                      SecurityQuestionFormField(
+                        items: securityQuestions,
+                        onQuestionSelected: (value) {
+                          setState(() {
+                            selectedSecurityQuestion = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      SecurityAnswerFormField(
+                        securityAnswerController: securityAnswerController,
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
+                    if (!state.isSignUpMode) const CheckboxWidget(),
+                    SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: SizedBox(
+                        width:
+                            LayOutWidget.isMobile(context)
+                                ? width / 4
+                                : LayOutWidget.isDesktop(context)
+                                ? width / 8
+                                : LayOutWidget.isTablet(context)
+                                ? width / 6
+                                : width / 4,
+                        child:
+                            state.isLoading
+                                ? const SizedBox(
+                                  height: 50,
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 30,
+                                      height: 30,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.0,
+                                        strokeCap: StrokeCap.round,
+                                      ),
                                     ),
                                   ),
+                                )
+                                : SignInButton(
+                                  formKey: formKey,
+                                  loginController: loginController,
+                                  passwordController: passwordController,
+                                  context: context,
+                                  submit: () => handleSubmit(state),
                                 ),
-                              ),
-                            )
-                            : SignInButton(
-                              formKey: formKey,
-                              loginController: loginController,
-                              passwordController: passwordController,
-                              context: context,
-                              submit: () => handleSubmit(state),
-                            ),
-                  ),
-                ),
-                state.isSignUpMode
-                    ? SizedBox.shrink()
-                    : SizedBox(
-                      height: LayOutWidget.isMobile(context) ? 10 : 20,
+                      ),
                     ),
-                SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.topLeft,
-                  child:
-                      state.isSignUpMode
-                          ? TextButton(
-                            onPressed: swap,
-                            child: Text(
-                              state.isSignUpMode
-                                  ? ' "i already have an account" ...Sign In'
-                                  : 'Register',
-                              style: const TextStyle(
-                                color: Colors.blue,
-                                fontStyle: FontStyle.italic,
-                                fontWeight: FontWeight.normal,
-                                fontSize: 17,
-                              ),
-                            ),
-                          )
-                          : TextGroupWidget(swap: swap),
+                    if (!state.isSignUpMode)
+                      SizedBox(
+                        height: LayOutWidget.isMobile(context) ? 10 : 20,
+                      ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child:
+                          state.isSignUpMode
+                              ? TextButton(
+                                onPressed: swap,
+                                child: const Text(
+                                  ' "i already have an account" ...Sign In',
+                                  style: TextStyle(
+                                    color: Colors.blue,
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 17,
+                                  ),
+                                ),
+                              )
+                              : TextGroupWidget(swap: swap),
+                    ),
+                    // Add bottom padding to prevent overflow
+                    SizedBox(
+                      height: MediaQuery.of(context).viewInsets.bottom + 20,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
         );
       },
