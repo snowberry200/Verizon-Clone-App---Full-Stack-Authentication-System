@@ -3,7 +3,7 @@ import 'package:my_verizon/models/entity_dtos/user_dto.dart';
 
 class AuthResponseDTO {
   final UserDTO userDTO;
-  final String accessToken;
+  final String? accessToken;
   final String message;
   final String statusCode;
   final bool requiresVerification;
@@ -28,14 +28,14 @@ class AuthResponseDTO {
 
   Map<String, dynamic> toJson() {
     return {
-      'user': userDTO.toJson(),
+      'userDTO': userDTO.toJson(),
       'accessToken': accessToken,
       'message': message,
       'statusCode': statusCode,
       'requiresVerification': requiresVerification,
-      'verificationToken': emailVerificationToken,
+      'emailVerificationToken': emailVerificationToken,
       if (userSecurityDataResponseDTO != null)
-        'userSecurityDataResponseDTO': userSecurityDataResponseDTO!.toJson(),
+        'securityDataResponseDto': userSecurityDataResponseDTO!.toJson(),
       if (lastLogin != null) 'lastLogin': lastLogin!.toIso8601String(),
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (verifiedAt != null) 'verifiedAt': verifiedAt!.toIso8601String(),
@@ -43,17 +43,35 @@ class AuthResponseDTO {
   }
 
   factory AuthResponseDTO.fromJson(Map<String, dynamic> json) {
+    print('🔍 ===== AuthResponseDTO.fromJson =====');
+    print('   Input JSON: $json');
+    print('   JSON keys: ${json.keys.toList()}');
+
+    // Check each required field
+    print('   Checking userDTO: ${json['userDTO']}');
+    print('   Checking accessToken: ${json['accessToken']}');
+    print('   Checking message: ${json['message']}');
+    print('   Checking statusCode: ${json['statusCode']}');
+    print('   Checking requiresVerification: ${json['requiresVerification']}');
+    print(
+      '   Checking emailVerificationToken: ${json['emailVerificationToken']}',
+    );
+    print('===================================');
+
     return AuthResponseDTO(
-      userDTO: UserDTO.fromJson(json['user']),
+      userDTO:
+          json['userDTO'] != null
+              ? UserDTO.fromJson(json['userDTO'])
+              : UserDTO.empty(),
       accessToken: json['accessToken'] ?? '',
       message: json['message'] ?? '',
       statusCode: json['statusCode'] ?? '',
       requiresVerification: json['requiresVerification'] ?? false,
-      emailVerificationToken: json['verificationToken'] ?? '',
+      emailVerificationToken: json['emailVerificationToken'] ?? '',
       userSecurityDataResponseDTO:
-          json['userSecurityDataResponseDTO'] != null
+          json['securityDataResponseDto'] != null
               ? UserSecurityDataResponseDTO.fromJson(
-                json['userSecurityDataResponseDTO'],
+                json['securityDataResponseDto'],
               )
               : null,
       lastLogin:

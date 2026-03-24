@@ -1,7 +1,5 @@
+// layout.dart - remove the BlocProvider
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:my_verizon/bloc/auth_bloc.dart';
-import 'package:my_verizon/auth_service/auth_service.dart';
 import 'package:my_verizon/layout/desktop.dart';
 import 'package:my_verizon/layout/mobile.dart';
 import 'package:my_verizon/layout/tablet.dart';
@@ -31,20 +29,18 @@ class LayOutWidget extends StatefulWidget {
 class _LayOutWidgetState extends State<LayOutWidget> {
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthBloc(authService: AuthService()),
-      child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          if (constraints.maxWidth >= desktopScreenSize) {
-            return const DesktopScreen();
-          } else if (constraints.maxWidth < desktopScreenSize &&
-              constraints.maxWidth >= tabletScreenSize) {
-            return const TabletScreen();
-          } else {
-            return const MobileScreen();
-          }
-        },
-      ),
+    // REMOVE the BlocProvider - it's now at the root level
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        if (constraints.maxWidth >= desktopScreenSize) {
+          return const DesktopScreen();
+        } else if (constraints.maxWidth < desktopScreenSize &&
+            constraints.maxWidth >= tabletScreenSize) {
+          return const TabletScreen();
+        } else {
+          return const MobileScreen();
+        }
+      },
     );
   }
 }

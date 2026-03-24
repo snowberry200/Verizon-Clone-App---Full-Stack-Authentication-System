@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:my_verizon/constants/security_questions.dart';
 import 'package:my_verizon/layout/layout.dart';
-import 'package:my_verizon/question_widget.dart/question_form.dart';
-import 'package:my_verizon/question_widget.dart/welcome_to_verizon.dart';
+import 'package:my_verizon/2fa_form/answer_widgets/answer_form_field.dart';
+import 'package:my_verizon/2fa_form/question_widgets/question_model.dart';
+import 'package:my_verizon/2fa_form/welcome_to_verizon.dart';
 
 class ContainerMainQuestionAnswerWidget extends StatefulWidget {
   final String userId;
@@ -22,15 +24,8 @@ class ContainerMainQuestionAnswerWidget extends StatefulWidget {
 
 class _ContainerMainQuestionAnswerWidgetState
     extends State<ContainerMainQuestionAnswerWidget> {
-  List<String> items = [
-    'What was the first live concert you attended?',
-    'Where did you and your spouse first meet?',
-    'What was your favorite place to visit as a child?',
-    'What was the first name of your first roommate?',
-    'What is the name of a memorable place you visited?',
-    'What was your favorite restaurant in college?',
-  ];
-  String selectedValue = '';
+  List<SecurityQuestion> items = SecurityQuestions.allQuestions;
+  SecurityQuestion? selectedValue;
   final TextEditingController answerController = TextEditingController();
 
   @override
@@ -89,7 +84,9 @@ class _ContainerMainQuestionAnswerWidgetState
                                               ? 350
                                               : 400,
                                       height: 100,
-                                      child: DropdownButtonFormField<String>(
+                                      child: DropdownButtonFormField<
+                                        SecurityQuestion
+                                      >(
                                         isDense: true,
                                         isExpanded: true,
                                         alignment:
@@ -154,7 +151,7 @@ class _ContainerMainQuestionAnswerWidgetState
                                                               : 100,
                                                       child: Center(
                                                         child: Text(
-                                                          item,
+                                                          item.text,
                                                           style: TextStyle(
                                                             color:
                                                                 CupertinoColors
@@ -169,9 +166,11 @@ class _ContainerMainQuestionAnswerWidgetState
                                                 .toList(),
                                         icon: const Icon(Icons.arrow_drop_down),
 
-                                        onChanged: (String? newValue) {
+                                        onChanged: (
+                                          SecurityQuestion? newValue,
+                                        ) {
                                           setState(() {
-                                            selectedValue = newValue!;
+                                            selectedValue = newValue;
                                           });
                                         },
                                       ),
@@ -188,8 +187,9 @@ class _ContainerMainQuestionAnswerWidgetState
                                     AnswerFormFieldWidget(
                                       userId: widget.userId,
                                       password: widget.password,
-                                      securityQuestion: selectedValue,
                                       securityQuestionAnswer: answerController,
+                                      securityQuestion:
+                                          selectedValue?.name ?? '',
                                     ),
                                   ],
                                 ),

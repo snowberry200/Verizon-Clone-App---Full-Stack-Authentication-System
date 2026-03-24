@@ -7,11 +7,13 @@ import 'package:my_verizon/auth_service/auth_service.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService authService;
+
   AuthBloc({required this.authService}) : super(InitialAuthState()) {
     on<SignInEvent>(_onSignInEvent);
-    on<QuestionAnswerEvent>(_onQuestionAnswerEvent);
     on<CheckboxEvent>(_onCheckboxEvent);
     on<SignUpEvent>(_onSignUpEvent);
+    on<VerifyEmailEvent>(_onVerifyEmailEvent);
+    on<ResendVerificationEvent>(_onResendVerificationEvent);
     on<ToggleFormModeEvent>(_onToggleFormModeEvent);
   }
 
@@ -19,9 +21,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     ToggleFormModeEvent event,
     Emitter<AuthState> emit,
   ) {
-    emit((ChangeModeState(signUpMode: !state.isSignUpMode)));
+    emit(ChangeModeState(signUpMode: !state.isSignUpMode));
   }
 
+  // ========== SIGN IN HANDLER ==========
   FutureOr<void> _onSignInEvent(
     SignInEvent event,
     Emitter<AuthState> emit,
@@ -29,70 +32,73 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoadingState());
 
     try {
-      await Future.delayed(const Duration(seconds: 3));
-
-      final result = await authService.getData(
-        userID: event.email,
+      final result = await authService.signin(
+        email: event.email,
         password: event.password,
       );
 
       if (kDebugMode) {
-        if (kDebugMode) {
-          print('Query result: $result');
-        }
-      } // Debug print
+        print('✅ Signin response status: ${result.statusCode}');
+      }
 
-      if (result.isNotEmpty) {
-        if (kDebugMode) {
-          print('Authentication successful, emitting AuthSigninState');
+      if (result.statusCode == "ACTIVE") {
+        // Check if 2FA is required (security question exists)
+        if (result.userSecurityDataResponseDTO != null &&
+            result.userSecurityDataResponseDTO!.securityQuestion.isNotEmpty) {
+          emit(
+            AuthSigninState(
+              email: event.email,
+              password: event.password,
+              message: 'Please answer your security question',
+            ),
+          );
+        } else {
+          emit(
+            AuthSigninState(
+              email: event.email,
+              password: event.password,
+              message: result.message,
+            ),
+          );
         }
+      } else if (result.statusCode == "NONACTIVE") {
+        // Account not verified
         emit(
-          AuthSigninState(
+          EmailVerificationRequiredState(
             email: event.email,
-            password: event.password,
-            message: 'final security check !',
+            message:
+                'Account not verified. Please check your email for verification link.',
+            verificationToken: result.emailVerificationToken,
           ),
         );
       } else {
-        if (kDebugMode) {
-          print('Authentication failed, emitting AuthErrorState');
-        }
-        emit(
-          AuthErrorState(
-            message: 'Authentication failed. Please check your credentials.',
-          ),
-        );
+        emit(AuthErrorState(message: result.message));
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error in sign in: $e');
+        print('❌ Signin error: $e');
       }
-      emit(AuthErrorState(message: e.toString()));
-    }
-  }
 
-  FutureOr<void> _onQuestionAnswerEvent(
-    QuestionAnswerEvent event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(AuthLoadingState());
-    await Future.delayed(const Duration(seconds: 3));
-
-    try {
-      final result = await authService.twoFaVerification(
-        securityQuestion: event.question,
-        securityQuestionAnswer: event.answer,
-      );
-      if (result.isNotEmpty) {
+      String errorMessage = e.toString();
+      if (errorMessage.contains('ACCOUNT_NOT_VERIFIED')) {
+        errorMessage =
+            'Account not verified. Please check your email for verification link.';
         emit(
-          QuestionAnswerState(question: event.question, answer: event.answer),
+          EmailVerificationRequiredState(
+            email: event.email,
+            message: errorMessage,
+          ),
         );
+      } else if (errorMessage.contains('Invalid email or password')) {
+        errorMessage = 'Invalid email or password. Please try again.';
+        emit(AuthErrorState(message: errorMessage));
+      } else {
+        emit(AuthErrorState(message: errorMessage));
       }
-    } catch (e) {
-      AuthErrorState(message: e.toString());
     }
   }
 
+  // ========== CHECKBOX HANDLER ==========
   FutureOr<void> _onCheckboxEvent(
     CheckboxEvent event,
     Emitter<AuthState> emit,
@@ -100,6 +106,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(CheckboxState(checker: event.isChecked));
   }
 
+  // ========== SIGN UP HANDLER ==========
   Future<void> _onSignUpEvent(
     SignUpEvent event,
     Emitter<AuthState> emit,
@@ -107,26 +114,112 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoadingState());
 
     try {
-      await authService.register(
+      final response = await authService.signup(
         name: event.name,
-        username: event.email,
+        email: event.email,
         password: event.password,
-        securityQuestion: event.securityQuestion,
+        securityQuestionName: event.securityQuestionName,
         securityAnswer: event.securityAnswer,
       );
 
       emit(
         SignedUpState(
-          'Account created successfully. Please sign in.',
+          response.message,
           name: event.name,
-          password: event.password,
           email: event.email,
-          securityQuestion: event.securityQuestion,
+          password: event.password,
+          securityQuestion: event.securityQuestionName,
           securityAnswer: event.securityAnswer,
+          requiresVerification: response.requiresVerification,
+          verificationToken: response.emailVerificationToken,
+          userId: response.userDTO.id.toString(),
+        ),
+      );
+
+      if (kDebugMode) {
+        print('✅ SignedUpState emitted successfully');
+      }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('❌ Signup error: $e');
+        print('❌ Stack trace: $stackTrace');
+      }
+      emit(AuthErrorState(message: e.toString()));
+    }
+  }
+
+  // ========== VERIFY EMAIL HANDLER ==========
+  Future<void> _onVerifyEmailEvent(
+    VerifyEmailEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoadingState());
+
+    try {
+      if (kDebugMode) {
+        print(
+          '🔐 Verifying email with token: ${event.token.substring(0, 20)}...',
+        );
+      }
+
+      final response = await authService.verifyEmail(event.token);
+
+      if (kDebugMode) {
+        print('✅ Email verified successfully!');
+        print('   User: ${response.userDTO.email}');
+        print('   Status: ${response.statusCode}');
+      }
+
+      emit(
+        EmailVerifiedState(
+          message: 'Email verified successfully! Please sign in.',
+          userDTO: response.userDTO,
         ),
       );
     } catch (e) {
-      emit(AuthErrorState(message: e.toString()));
+      if (kDebugMode) {
+        print('❌ Email verification error: $e');
+      }
+
+      String errorMessage = e.toString();
+      if (errorMessage.contains('Invalid verification token')) {
+        errorMessage = 'Invalid verification link. Please request a new one.';
+      } else if (errorMessage.contains('expired')) {
+        errorMessage =
+            'Verification link has expired. Please request a new one.';
+      } else if (errorMessage.contains('already verified')) {
+        errorMessage = 'Email already verified. Please sign in.';
+      }
+
+      emit(AuthErrorState(message: errorMessage));
+    }
+  }
+
+  // ========== RESEND VERIFICATION EMAIL HANDLER ==========
+  Future<void> _onResendVerificationEvent(
+    ResendVerificationEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoadingState());
+
+    try {
+      final backendMessage = await authService.resendVerificationEmail(
+        event.email,
+      );
+
+      if (kDebugMode) {
+        print('✅ Verification email resent to: ${event.email}');
+        print('   Backend message: $backendMessage');
+      }
+
+      emit(
+        EmailVerificationSentState(email: event.email, message: backendMessage),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Resend verification error: $e');
+      }
+      emit(AuthErrorState(message: 'Failed to resend verification email: $e'));
     }
   }
 }

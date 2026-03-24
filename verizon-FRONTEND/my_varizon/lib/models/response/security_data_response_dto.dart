@@ -1,30 +1,19 @@
 class UserSecurityDataResponseDTO {
-  String? securityQuestion;
-  String? securityAnswer;
-
-  UserSecurityDataResponseDTO({this.securityQuestion, this.securityAnswer});
-
-  factory UserSecurityDataResponseDTO.verifyOwnership({
-    required String securityQuestion,
-    required String securityAnswer,
-  }) {
-    return UserSecurityDataResponseDTO(
-      securityQuestion: securityQuestion,
-      securityAnswer: securityAnswer,
-    );
-  }
+  String securityQuestion;
+  String message;
+  UserSecurityDataResponseDTO({
+    required this.securityQuestion,
+    required this.message,
+  });
 
   factory UserSecurityDataResponseDTO.fromJson(Map<String, dynamic> json) {
     return UserSecurityDataResponseDTO(
-      securityQuestion: json['securityQuestion'],
-      securityAnswer: json['securityAnswer'],
+      securityQuestion: json['securityQuestion'] ?? '',
+      message: json['message'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {};
-    data['securityQuestion'] = securityQuestion;
-    data['securityAnswer'] = securityAnswer;
-    return data;
+    return {'securityQuestion': securityQuestion, 'message': message};
   }
 }

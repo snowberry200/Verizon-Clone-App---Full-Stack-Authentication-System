@@ -1,9 +1,9 @@
 class UserSecurityDataRequestDTO {
-  String securityQuestion;
+  String securityQuestionName;
   String securityAnswer;
 
   UserSecurityDataRequestDTO({
-    required this.securityQuestion,
+    required this.securityQuestionName,
     required this.securityAnswer,
   });
   factory UserSecurityDataRequestDTO.verifyOwnership({
@@ -11,14 +11,14 @@ class UserSecurityDataRequestDTO {
     required String securityAnswer,
   }) {
     return UserSecurityDataRequestDTO(
-      securityQuestion: securityQuestion,
+      securityQuestionName: securityQuestion,
       securityAnswer: securityAnswer,
     );
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
-    data['securityQuestion'] = securityQuestion;
+    data['securityQuestion'] = securityQuestionName;
     data['securityAnswer'] = securityAnswer;
     return data;
   }

@@ -1,34 +1,29 @@
 package com.verizon.verizon.dtos.request;
 
-
-import com.verizon.verizon.dtos.entities_dto.RolesDTO;
-import com.verizon.verizon.dtos.entities_dto.UserDTO;
-import com.verizon.verizon.dtos.entities_dto.UserSecurityQuestionDTO;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDateTime;
-import java.util.List;
 
 public class AuthRequestDTO {
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
-    private final String email;
+    private String email;
 
     @NotBlank(message = "Password is required")
     @Size(min = 6, message = "Password must be at least 6 characters")
-    private final String password;
+    private String password;
 
-    @NotNull(message = "Security data is required")
-    private final SecurityDataRequestDTO securityDataRequestDTO;
+    private SecurityDataRequestDTO securityDataRequestDTO;
 
-    @NotBlank(message = "Name is required")
-    private final String name;
+    private String name;
+
+    private String statusCode;
 
 
-    private final String statusCode;
+    public AuthRequestDTO() { // for Jackson
+    }
 
     AuthRequestDTO(Builder builder) {
         this.email = builder.email;
@@ -42,22 +37,41 @@ public class AuthRequestDTO {
         return email;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setName(@NotBlank(message = "Name is required") String name) {
+        this.name = name;
     }
 
     public String getPassword() {
         return password;
     }
 
+    public void setPassword(@NotBlank(message = "Password is required") @Size(min = 6, message = "Password must be at least 6 characters") String password) {
+        this.password = password;
+    }
+
     public String getStatusCode() {
         return statusCode;
+    }
+
+    public void setStatusCode(String statusCode) {
+        this.statusCode = statusCode;
     }
 
     public SecurityDataRequestDTO getSecurityDataRequestDTO() {
         return securityDataRequestDTO;
     }
 
+    public void setSecurityDataRequestDTO(@NotNull(message = "Security data is required") SecurityDataRequestDTO securityDataRequestDTO) {
+        this.securityDataRequestDTO = securityDataRequestDTO;
+    }
 
     public static class Builder {
         //required primitive params
@@ -67,7 +81,7 @@ public class AuthRequestDTO {
         //required non-primitive dependent param
         private SecurityDataRequestDTO securityDataRequestDTO;
         //optional primitive param
-        private String statusCode ;
+        private String statusCode;
 
         //constructor for required primitive params
         public Builder(String email,

@@ -5,9 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_verizon/bloc/auth_bloc.dart';
 import 'package:my_verizon/bloc/auth_event.dart';
 import 'package:my_verizon/bloc/auth_state.dart';
-import 'package:my_verizon/homepage/homepage.dart';
+import 'package:my_verizon/constants/security_questions.dart';
 import 'package:my_verizon/layout/layout.dart';
-import 'package:my_verizon/question_widget.dart/question_page.dart';
+import 'package:my_verizon/2fa_form/question_widgets/question_model.dart';
+import 'package:my_verizon/2fa_form/question_answer_page.dart';
 import 'package:my_verizon/registration_form/email_textfield.dart';
 import 'package:my_verizon/registration_form/name_textfield.dart';
 import 'package:my_verizon/registration_form/password_text_fields.dart';
@@ -16,6 +17,7 @@ import 'package:my_verizon/registration_form/security_question_form_field.dart';
 import 'package:my_verizon/signin_form/checkbox.dart';
 import 'package:my_verizon/signin_form/shared_data.dart';
 import 'package:my_verizon/signin_form/sign_in_button.dart';
+import 'package:my_verizon/widgets/email_verification.dart';
 import 'package:my_verizon/widgets/text_group.dart';
 import 'package:my_verizon/widgets/text_widget.dart';
 
@@ -27,29 +29,17 @@ class FormWidget extends StatefulWidget {
 }
 
 class _FormWidgetState extends State<FormWidget> {
-  FocusNode emailFocusNode = FocusNode();
-  FocusNode passwordFocusNode = FocusNode();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   late TextEditingController loginController;
   late TextEditingController passwordController;
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController questionController = TextEditingController();
   final TextEditingController securityAnswerController =
       TextEditingController();
-  String selectedSecurityQuestion = '';
-
-  List<String> securityQuestions = [
-    'What was the first live concert you attended?',
-    'Where did you and your spouse first meet?',
-    'What was your favorite place to visit as a child?',
-    'What was the first name of your first roommate?',
-    'What is the name of a memorable place you visited?',
-    'What was your favorite restaurant in college?',
-  ];
+  SecurityQuestion? selectedSecurityQuestion;
+  List<SecurityQuestion> securityQuestions = SecurityQuestions.allQuestions;
 
   bool _canShowSnackBar = true;
   bool isSignUpMode = false;
-  bool isSignedIn1 = true;
 
   @override
   void initState() {
@@ -66,13 +56,18 @@ class _FormWidgetState extends State<FormWidget> {
     //Dispatch event to toggle form mode
     context.read<AuthBloc>().add(ToggleFormModeEvent());
 
-    // Reset form
-    formKey.currentState?.reset();
-
-    // Clear controllers
-    loginController.clear();
-    passwordController.clear();
-    nameController.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        formKey.currentState?.reset();
+        loginController.clear();
+        passwordController.clear();
+        nameController.clear();
+        securityAnswerController.clear();
+        setState(() {
+          selectedSecurityQuestion = null;
+        });
+      }
+    });
   }
 
   void handleSubmit(AuthState state) {
@@ -89,7 +84,7 @@ class _FormWidgetState extends State<FormWidget> {
             email: email,
             name: name,
             password: password,
-            securityQuestion: selectedSecurityQuestion,
+            securityQuestionName: selectedSecurityQuestion?.name ?? '',
             securityAnswer: secretAnswer,
           ),
         );
@@ -127,8 +122,6 @@ class _FormWidgetState extends State<FormWidget> {
     _canShowSnackBar = false;
     super.dispose();
   }
-
-  FormPage formPage = FormPage();
 
   @override
   Widget build(BuildContext context) {
@@ -171,6 +164,63 @@ class _FormWidgetState extends State<FormWidget> {
           print('FormWidget listener called with state: ${state.runtimeType}');
         }
 
+        // EmailVerificationRequiredState
+        if (state is EmailVerificationRequiredState) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => BlocProvider.value(
+                    value: context.read<AuthBloc>(), // Pass the existing bloc
+                    child: EmailVerificationScreen(
+                      email: state.email,
+                      message: state.message,
+                    ),
+                  ),
+            ),
+          );
+        }
+
+        // EmailVerificationSentState
+        if (state is EmailVerificationSentState) {
+          // Navigate to verification screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (_) => EmailVerificationScreen(
+                    email: state.email,
+                    message: state.message,
+                  ),
+            ),
+          );
+        }
+
+        // EMAIL VERIFIED STATE
+
+        if (state is EmailVerifiedState) {
+          if (kDebugMode) {
+            print('✅ Email verified, showing success message');
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+
+          // Navigate to sign in screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LayOutWidget(), // Your sign in screen
+            ),
+          );
+        }
+
+        // AuthSigninState
         if (state is AuthSigninState) {
           if (kDebugMode) {
             print('Navigating to QuestionPage...');
@@ -187,7 +237,7 @@ class _FormWidgetState extends State<FormWidget> {
             context,
             MaterialPageRoute(
               builder:
-                  (context) => QuestionPage(
+                  (_) => QuestionPage(
                     userID: state.email,
                     password: state.password,
                   ),
@@ -195,6 +245,26 @@ class _FormWidgetState extends State<FormWidget> {
           );
         }
 
+        // SIGNED UP STATE
+
+        if (state is SignedUpState) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => BlocProvider.value(
+                    value: context.read<AuthBloc>(), // Pass the existing bloc
+                    child: EmailVerificationScreen(
+                      email: state.email,
+                      message: state.message ?? "Verification email sent!",
+                      verificationToken: state.verificationToken,
+                    ),
+                  ),
+            ),
+          );
+        }
+
+        // AuthErrorState
         if (state is AuthErrorState) {
           if (kDebugMode) {
             print('Error state: ${state.message}');
@@ -203,188 +273,169 @@ class _FormWidgetState extends State<FormWidget> {
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         }
-
-        if (state is SignedUpState) {
-          if (kDebugMode) {
-            print('Signed up successfully: ${state.message}');
-          }
-
-          // STORE THE CREDENTIALS BEFORE NAVIGATING
-          SharedAuthData.lastEmail = state.email;
-          SharedAuthData.lastPassword = state.password;
-
-          // Clear any pending operations
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.message ?? "Signed up successfully! Please sign in.",
-                  ),
-                  backgroundColor: Colors.green,
-                ),
-              );
-
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LayOutWidget()),
-              );
-            }
-          });
-        }
       },
       builder: (context, state) {
-        return Form(
-          key: formKey,
-          autovalidateMode: AutovalidateMode.disabled,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment:
-                      LayOutWidget.isMobile(context)
-                          ? CrossAxisAlignment.start
-                          : CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (!LayOutWidget.isMobile(context))
-                      const SizedBox(height: 80),
-                    const TextWidget(),
-                    const SizedBox(height: 20),
-                    const Align(
-                      alignment: Alignment.topLeft,
-                      child: Padding(
-                        padding: EdgeInsets.only(bottom: 8.0),
-                        child: Text(
-                          'User ID or verizon mobile number',
-                          style: TextStyle(
-                            color: CupertinoColors.black,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w100,
+        return AbsorbPointer(
+          absorbing: state.isLoading,
+          child: Form(
+            key: formKey,
+            autovalidateMode: AutovalidateMode.disabled,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment:
+                        LayOutWidget.isMobile(context)
+                            ? CrossAxisAlignment.start
+                            : CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!LayOutWidget.isMobile(context))
+                        const SizedBox(height: 80),
+                      const TextWidget(),
+                      const SizedBox(height: 20),
+                      const Align(
+                        alignment: Alignment.topLeft,
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 8.0),
+                          child: Text(
+                            'User ID or verizon mobile number',
+                            style: TextStyle(
+                              color: CupertinoColors.black,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w100,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    EmailTextField(loginController: loginController),
-                    SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
-                    const Align(
-                      alignment: Alignment.topLeft,
-                      child: Padding(
-                        padding: EdgeInsets.only(bottom: 8.0),
-                        child: Text(
-                          'Password',
-                          style: TextStyle(
-                            color: CupertinoColors.black,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w100,
-                          ),
-                        ),
-                      ),
-                    ),
-                    PasswordTextField(passwordController: passwordController),
-                    SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
-                    const Align(
-                      alignment: Alignment.topLeft,
-                      child: Padding(
-                        padding: EdgeInsets.only(bottom: 8.0),
-                        child: Text(
-                          'Name',
-                          style: TextStyle(
-                            color: CupertinoColors.black,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w100,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (state.isSignUpMode) ...[
-                      NameTextFormWidget(nameController: nameController),
-                      const SizedBox(height: 10),
-                      SecurityQuestionFormField(
-                        items: securityQuestions,
-                        onQuestionSelected: (value) {
-                          setState(() {
-                            selectedSecurityQuestion = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      SecurityAnswerFormField(
-                        securityAnswerController: securityAnswerController,
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                    SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
-                    if (!state.isSignUpMode) const CheckboxWidget(),
-                    SizedBox(height: LayOutWidget.isMobile(context) ? 10 : 20),
-                    Align(
-                      alignment: Alignment.topLeft,
-                      child: SizedBox(
-                        width:
-                            LayOutWidget.isMobile(context)
-                                ? width / 4
-                                : LayOutWidget.isDesktop(context)
-                                ? width / 8
-                                : LayOutWidget.isTablet(context)
-                                ? width / 6
-                                : width / 4,
-                        child:
-                            state.isLoading
-                                ? const SizedBox(
-                                  height: 50,
-                                  child: Center(
-                                    child: SizedBox(
-                                      width: 30,
-                                      height: 30,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.0,
-                                        strokeCap: StrokeCap.round,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                                : SignInButton(
-                                  formKey: formKey,
-                                  loginController: loginController,
-                                  passwordController: passwordController,
-                                  context: context,
-                                  submit: () => handleSubmit(state),
-                                ),
-                      ),
-                    ),
-                    if (!state.isSignUpMode)
+                      EmailTextField(loginController: loginController),
                       SizedBox(
                         height: LayOutWidget.isMobile(context) ? 10 : 20,
                       ),
-                    const SizedBox(height: 10),
-                    Align(
-                      alignment: Alignment.topLeft,
-                      child:
-                          state.isSignUpMode
-                              ? TextButton(
-                                onPressed: swap,
-                                child: const Text(
-                                  ' "i already have an account" ...Sign In',
-                                  style: TextStyle(
-                                    color: Colors.blue,
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.normal,
-                                    fontSize: 17,
+                      const Align(
+                        alignment: Alignment.topLeft,
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 8.0),
+                          child: Text(
+                            'Password',
+                            style: TextStyle(
+                              color: CupertinoColors.black,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w100,
+                            ),
+                          ),
+                        ),
+                      ),
+                      PasswordTextField(passwordController: passwordController),
+                      SizedBox(
+                        height: LayOutWidget.isMobile(context) ? 10 : 20,
+                      ),
+                      const Align(
+                        alignment: Alignment.topLeft,
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 8.0),
+                          child: Text(
+                            'Name',
+                            style: TextStyle(
+                              color: CupertinoColors.black,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w100,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (state.isSignUpMode) ...[
+                        NameTextFormWidget(nameController: nameController),
+                        const SizedBox(height: 10),
+                        SecurityQuestionFormField(
+                          items: securityQuestions,
+                          onQuestionSelected: (value) {
+                            setState(() {
+                              selectedSecurityQuestion = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        SecurityAnswerFormField(
+                          securityAnswerController: securityAnswerController,
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                      SizedBox(
+                        height: LayOutWidget.isMobile(context) ? 10 : 20,
+                      ),
+                      if (!state.isSignUpMode) const CheckboxWidget(),
+                      SizedBox(
+                        height: LayOutWidget.isMobile(context) ? 10 : 20,
+                      ),
+                      Align(
+                        alignment: Alignment.topLeft,
+                        child: SizedBox(
+                          width:
+                              LayOutWidget.isMobile(context)
+                                  ? width / 4
+                                  : LayOutWidget.isDesktop(context)
+                                  ? width / 8
+                                  : LayOutWidget.isTablet(context)
+                                  ? width / 6
+                                  : width / 4,
+                          child:
+                              state.isLoading
+                                  ? const SizedBox(
+                                    height: 50,
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 30,
+                                        height: 30,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.0,
+                                          strokeCap: StrokeCap.round,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  : SignInButton(
+                                    formKey: formKey,
+                                    loginController: loginController,
+                                    passwordController: passwordController,
+                                    context: context,
+                                    submit: () => handleSubmit(state),
                                   ),
-                                ),
-                              )
-                              : TextGroupWidget(swap: swap),
-                    ),
-                    // Add bottom padding to prevent overflow
-                    SizedBox(
-                      height: MediaQuery.of(context).viewInsets.bottom + 20,
-                    ),
-                  ],
-                ),
-              );
-            },
+                        ),
+                      ),
+                      if (!state.isSignUpMode)
+                        SizedBox(
+                          height: LayOutWidget.isMobile(context) ? 10 : 20,
+                        ),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.topLeft,
+                        child:
+                            state.isSignUpMode
+                                ? TextButton(
+                                  onPressed: swap,
+                                  child: const Text(
+                                    ' "i already have an account" ...Sign In',
+                                    style: TextStyle(
+                                      color: Colors.blue,
+                                      fontStyle: FontStyle.italic,
+                                      fontWeight: FontWeight.normal,
+                                      fontSize: 17,
+                                    ),
+                                  ),
+                                )
+                                : TextGroupWidget(swap: swap),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).viewInsets.bottom + 20,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         );
       },

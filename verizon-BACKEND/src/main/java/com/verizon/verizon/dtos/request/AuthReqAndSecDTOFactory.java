@@ -17,7 +17,7 @@ public class AuthReqAndSecDTOFactory {
             throw new IllegalArgumentException("Password is required for sign in");
         }
         String statusCode = "NONACTIVE";
-        return new AuthRequestDTO.Builder(email,password,"")
+        return new AuthRequestDTO.Builder(email,password,null)
                 .statusCode(statusCode)
                 .build();
 
@@ -43,7 +43,7 @@ public class AuthReqAndSecDTOFactory {
             throw new IllegalArgumentException("Security answer is required");
         }
         String statusCode = "PENDING_SECURITY";
-        return new AuthRequestDTO.Builder(email, "", "")
+        return new AuthRequestDTO.Builder(email, null, null)
                 .statusCode(statusCode)// No password needed
                 .securityDataRequestDTO(securityDataRequestDTO)
                 .build();

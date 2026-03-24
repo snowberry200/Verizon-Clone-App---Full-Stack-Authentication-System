@@ -7,48 +7,68 @@ abstract class AuthEvent extends Equatable {
 class SignInEvent extends AuthEvent {
   final String email;
   final String password;
+
   const SignInEvent({required this.email, required this.password});
+
   @override
   List<Object?> get props => [email, password];
 }
 
 class CheckboxEvent extends AuthEvent {
-  const CheckboxEvent({required this.isChecked});
   final bool isChecked;
+
+  const CheckboxEvent({required this.isChecked});
 
   @override
   List<Object?> get props => [isChecked];
-}
-
-class QuestionAnswerEvent extends AuthEvent {
-  final String question;
-  final String answer;
-  const QuestionAnswerEvent({required this.question, required this.answer});
-  @override
-  List<Object?> get props => [question, answer];
 }
 
 class SignUpEvent extends AuthEvent {
   final String name;
   final String email;
   final String password;
-  final String securityQuestion;
+  final String securityQuestionName;
   final String securityAnswer;
 
   const SignUpEvent({
     required this.name,
-    required this.password,
     required this.email,
-    required this.securityQuestion,
+    required this.password,
+    required this.securityQuestionName,
     required this.securityAnswer,
   });
 
   @override
-  List<Object?> get props => [email, name, password];
+  List<Object?> get props => [
+    name,
+    email,
+    password,
+    securityQuestionName,
+    securityAnswer,
+  ];
+}
+
+class VerifyEmailEvent extends AuthEvent {
+  final String token;
+
+  const VerifyEmailEvent({required this.token});
+
+  @override
+  List<Object?> get props => [token];
+}
+
+class ResendVerificationEvent extends AuthEvent {
+  final String email;
+
+  const ResendVerificationEvent({required this.email});
+
+  @override
+  List<Object?> get props => [email];
 }
 
 class ToggleFormModeEvent extends AuthEvent {
   const ToggleFormModeEvent();
+
   @override
   List<Object?> get props => [];
 }

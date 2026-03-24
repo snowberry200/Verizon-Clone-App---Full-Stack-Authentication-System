@@ -1,12 +1,33 @@
 package com.verizon.verizon.dtos.response;
 
 public class SecurityDataResponseDto {
-    private final String securityQuestion;
-    private final String message;  // Instead of answer
+    private String securityQuestion;
+    private String message;  // Instead of answer
+
+
+    public SecurityDataResponseDto() {
+        //for Jackson
+    }
 
     private SecurityDataResponseDto(Builder builder) {
         this.securityQuestion = builder.securityQuestion;
         this.message = builder.message;
+    }
+
+    public String getSecurityQuestion() {
+        return securityQuestion;
+    }
+
+    public void setSecurityQuestion(String securityQuestion) {
+        this.securityQuestion = securityQuestion;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public static class Builder {
@@ -21,14 +42,6 @@ public class SecurityDataResponseDto {
         public SecurityDataResponseDto build() {
             return new SecurityDataResponseDto(this);
         }
-    }
-
-    public String getSecurityQuestion() {
-        return securityQuestion;
-    }
-
-    public String getMessage() {
-        return message;
     }
 
 

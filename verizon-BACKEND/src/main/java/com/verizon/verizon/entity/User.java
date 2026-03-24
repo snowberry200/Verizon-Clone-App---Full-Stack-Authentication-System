@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -27,9 +27,9 @@ public class User {
     private LocalDateTime createdAt;
     @Column(nullable = true)
     private LocalDateTime lastLogin;
-    @Column(nullable = true)
+    @Column(name = "access_token", columnDefinition = "TEXT")
     private String accessToken;
-    @Column(nullable = true)
+    @Column(name = "verification_token", columnDefinition = "TEXT")
     private String verificationToken;
 
     @Column(nullable = true)
@@ -38,7 +38,7 @@ public class User {
     @Column(nullable = true)
     private LocalDateTime verifiedAt;
     @Column(name = "status_code", nullable = false)
-    private String statusCode;
+    private String statusCode = "NONACTIVE";
     @Transient
     private UserStatusContext userStatusContext;
     @Transient

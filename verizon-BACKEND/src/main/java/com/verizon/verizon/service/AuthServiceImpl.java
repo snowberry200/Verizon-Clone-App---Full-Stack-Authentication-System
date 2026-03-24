@@ -44,27 +44,44 @@ public class AuthServiceImpl implements AuthService {
         this.jwtTokenProviderImpl = jwtTokenProviderImpl;
     }
 
+    // Helper method to get or create verifiedAt timestamp
+    private LocalDateTime getVerifiedAt(User user) {
+        LocalDateTime existingVerifiedAt = user.getVerifiedAt();
+        if (existingVerifiedAt != null) {
+            return existingVerifiedAt;
+        }
+
+        if (Validator.ACTIVE.equals(user.getStatusCode())) {
+            LocalDateTime newVerifiedAt = LocalDateTime.now();
+            user.setVerifiedAt(newVerifiedAt);
+            userRepository.save(user);
+            return newVerifiedAt;
+        }
+
+        return null;
+    }
 
     // REGISTRATION
     @Override
     public AuthResponseDTO signUp(AuthRequestDTO authRequestDTO) {
-        //CHECK IF EMAIL EXIST IN DB
+        // CHECK IF EMAIL EXISTS IN DB
         boolean emailExists = userRepository.existsByEmail(authRequestDTO.getEmail());
         if (emailExists) {
             throw new InvalidCredentialException("Email already exists");
         }
-        //hash password
+
+        // Hash password
         String hashedPassword = passwordEncoder.encode(authRequestDTO.getPassword());
 
         // GET SECURITY QUESTION
-        SecurityQuestion securityQuestion = securityQuestionRepository
-                .findByQuestionText(authRequestDTO.getSecurityDataRequestDTO().getSecurityQuestion())
-                .orElseThrow(() -> new RuntimeException("please choose a security question"));
+        SecurityQuestion securityQuestionName = securityQuestionRepository.findByName(authRequestDTO.getSecurityDataRequestDTO().getSecurityQuestion())
+                //.findByQuestionText(authRequestDTO.getSecurityDataRequestDTO().getSecurityQuestion())
+                .orElseThrow(() -> new RuntimeException("Please choose a security question"));
 
         // CREATE USER SECURITY QUESTION
         UserSecurityQuestion userSecurityQuestion = new UserSecurityQuestion
                 .Builder(authRequestDTO.getSecurityDataRequestDTO().getSecurityAnswer())
-                .question(securityQuestion)
+                .question(securityQuestionName)
                 .build();
 
         // Save UserSecurityQuestion FIRST
@@ -84,11 +101,14 @@ public class AuthServiceImpl implements AuthService {
                 .userSecurityQuestion(savedUserSecurityQuestion)
                 .roles(List.of(defaultRole))
                 .build();
-        // ✅ Generate verification token USING the user
+
+        // Generate verification token
         String emailVerificationToken = jwtTokenProviderImpl.createVerificationToken(user);
-        // ✅ Set token on user
+
+        // Set token on user
         user.setVerificationToken(emailVerificationToken);
         user.setVerificationTokenExpiry(LocalDateTime.now().plusHours(24));
+
         // Establish bidirectional relationships
         defaultRole.addSingleUserInRole(user);
         savedUserSecurityQuestion.addSingleUser(user);
@@ -100,7 +120,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Create SecurityDataResponseDto
         SecurityDataResponseDto securityDataResponseDto = AuthResAndSecDTOFactory.createSecurityDataResponseDto(
-                securityQuestion.getQuestionText(),
+                securityQuestionName.getQuestionText(),
                 "Security answer has been saved successfully"
         );
 
@@ -112,7 +132,6 @@ public class AuthServiceImpl implements AuthService {
                 .createdAt(savedUser.getCreatedAt())
                 .securityDataResponseDto(securityDataResponseDto)
                 .build();
-
     }
 
     // SIGN IN
@@ -142,6 +161,14 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialException("Registration incomplete");
         }
 
+        // Check if user is ACTIVE
+        if (!Validator.ACTIVE.equals(user.getStatusCode())) {
+            throw new InvalidCredentialException("Account not verified. Please verify your email first.");
+        }
+
+        // Get or create verifiedAt using helper method
+        LocalDateTime verifiedAt = getVerifiedAt(user);
+
         // Create SecurityDataResponseDto
         SecurityDataResponseDto securityDataResponseDto = AuthResAndSecDTOFactory.createSecurityDataResponseDto(
                 user.getUserSecurityQuestion().getQuestion().getQuestionText(),
@@ -158,13 +185,13 @@ public class AuthServiceImpl implements AuthService {
                 .accessToken(tempToken)
                 .securityDataResponseDto(securityDataResponseDto)
                 .lastLogin(LocalDateTime.now())
+                .verifiedAt(verifiedAt)
                 .build();
     }
 
     // TWO FACTOR SECURITY
     @Override
     public AuthResponseDTO forSecurityChallenge(AuthRequestDTO request) {
-        // FIXED: Use 'request' parameter, not undefined 'authRequestDTO'
         String email = request.getEmail();
 
         // Find user
@@ -182,6 +209,9 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialException("Invalid security answer");
         }
 
+        // Get or create verifiedAt using helper method
+        LocalDateTime verifiedAt = getVerifiedAt(user);
+
         // Update last login
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
@@ -189,6 +219,10 @@ public class AuthServiceImpl implements AuthService {
         // Generate token
         String accessToken = jwtTokenProviderImpl.createAccessToken(user);
         String message = "Welcome to Verizon";
+
+        // Update last login
+        LocalDateTime now = LocalDateTime.now();
+
 
         // Create security response DTO
         String securityQuestionText = userSecurityQuestion.getQuestion().getQuestionText();
@@ -203,10 +237,12 @@ public class AuthServiceImpl implements AuthService {
                 .securityDataResponseDto(securityDataResponseDto)
                 .statusCode(Validator.ACTIVE)
                 .accessToken(accessToken)
+                .verifiedAt(verifiedAt)
+                .lastLogin(now)
                 .build();
     }
 
-    // EMAIL VERIFICATION - IMPLEMENT THIS!
+    // EMAIL VERIFICATION
     @Override
     @Transactional
     public AuthResponseDTO verifyEmail(String token) {
@@ -257,7 +293,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    // RESEND VERIFICATION EMAIL - IMPLEMENT THIS!
+    // RESEND VERIFICATION EMAIL
     @Override
     @Transactional
     public AuthResponseDTO resendVerificationEmail(String email) {
@@ -270,7 +306,7 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialException("Account already verified");
         }
 
-        // ✅ Generate new verification token USING the user (not null!)
+        // Generate new verification token
         String newToken = jwtTokenProviderImpl.createVerificationToken(user);
         user.setVerificationToken(newToken);
         user.setVerificationTokenExpiry(LocalDateTime.now().plusHours(24));
@@ -285,6 +321,4 @@ public class AuthServiceImpl implements AuthService {
                 .emailVerificationToken(newToken)
                 .build();
     }
-
-
 }

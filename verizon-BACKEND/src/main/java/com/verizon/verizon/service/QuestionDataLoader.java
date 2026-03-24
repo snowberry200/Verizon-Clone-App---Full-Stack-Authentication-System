@@ -2,45 +2,57 @@ package com.verizon.verizon.service;
 
 import com.verizon.verizon.entity.SecurityQuestion;
 import com.verizon.verizon.repository.SecurityQuestionRepository;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
 
 @Component
-public class QuestionDataLoader implements CommandLineRunner {
+public class QuestionDataLoader {
+
     private final SecurityQuestionRepository securityQuestionRepository;
 
     public QuestionDataLoader(SecurityQuestionRepository securityQuestionRepository) {
         this.securityQuestionRepository = securityQuestionRepository;
     }
 
-    @Override
-    public void run(String... args) throws Exception {
-        if(securityQuestionRepository.count() == 0){
-            List<QuestionPair> questions = Arrays.asList(
-                    new QuestionPair("PET_NAME", "What was your first pet's name?"),
-                    new QuestionPair("MOTHER_MAIDEN", "What is your mother's maiden name?"),
-                    new QuestionPair("FIRST_SCHOOL", "What was your first school?"),
-                    new QuestionPair("BIRTH_CITY", "What city were you born in?"),
-                    new QuestionPair("FAVORITE_BOOK", "What is your favorite book?")
-            );
+    @EventListener(ApplicationReadyEvent.class)
+    public void loadQuestions() {
+        try {
+            System.out.println("🔍 Loading security questions...");
 
-            questions.forEach(pair -> {
-                SecurityQuestion securityQuestion = new SecurityQuestion();
-                securityQuestion.setName(pair.name);           // ← Set short code
-                securityQuestion.setQuestionText(pair.text);    // ← Set full question
-                securityQuestionRepository.save(securityQuestion);
-            });
+            if(securityQuestionRepository.count() == 0){
+                List<QuestionPair> questions = Arrays.asList(
+                        new QuestionPair("CONCERT_ATTENDED", "What was the first live concert you attended?"),
+                        new QuestionPair("FIRST_MEET", "Where did you and your spouse first meet?"),
+                        new QuestionPair("FAVORITE PLACE", "What was your favorite place to visit as a child?"),
+                        new QuestionPair("FIRST_ROOM", "What was the first name of your first roommate?"),
+                        new QuestionPair("MEMORABLE_PLACE", "What is the name of a memorable place you visited?"),
+                        new QuestionPair("FAVORITE_RESTAURANT", "What was your favorite restaurant in college?")
+                );
+
+                questions.forEach(pair -> {
+                    SecurityQuestion securityQuestion = new SecurityQuestion();
+                    securityQuestion.setName(pair.name);
+                    securityQuestion.setQuestionText(pair.text);
+                    securityQuestionRepository.save(securityQuestion);
+                    System.out.println("✅ Added: " + pair.name);
+                });
+
+                System.out.println("✅ Loaded " + securityQuestionRepository.count() + " security questions");
+            } else {
+                System.out.println("✅ Security questions already exist: " + securityQuestionRepository.count());
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to load security questions: " + e.getMessage());
         }
     }
 
-    // Helper class
     private static class QuestionPair {
         String name;
         String text;
-
         QuestionPair(String name, String text) {
             this.name = name;
             this.text = text;

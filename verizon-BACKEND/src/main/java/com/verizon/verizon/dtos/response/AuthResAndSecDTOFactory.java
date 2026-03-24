@@ -16,7 +16,8 @@ public class AuthResAndSecDTOFactory {
             String accessToken,
             String message,
             UserDTO userDTO,
-            LocalDateTime lastLogin
+            LocalDateTime lastLogin,
+            LocalDateTime verifiedAt
     ) {
         Objects.requireNonNull(accessToken, Validator.ACCESS_TOKEN_NON_NULL);
         Objects.requireNonNull(message, Validator.MESSAGE_NON_NULL);
@@ -28,6 +29,7 @@ public class AuthResAndSecDTOFactory {
                 .statusCode(Validator.ACTIVE)
                 .requiresVerification(false)
                 .lastLogin(lastLogin != null ? lastLogin : LocalDateTime.now())
+                .verifiedAt(verifiedAt != null ? verifiedAt : LocalDateTime.now())
                 .build();
     }
 
@@ -41,7 +43,7 @@ public class AuthResAndSecDTOFactory {
         Objects.requireNonNull(userDTO, Validator.USERDTO_NON_NULL);
         Objects.requireNonNull(securityDataResponseDto, Validator.SECURITY_DATA_NON_NULL);
 
-        // ✅ Generate verification token
+        // Generate verification token
         String emailVerificationToken = UUID.randomUUID().toString();
 
         return new AuthResponseDTO.Builder(message)
@@ -49,7 +51,7 @@ public class AuthResAndSecDTOFactory {
                 .securityDataResponseDto(securityDataResponseDto)
                 .statusCode(Validator.NONACTIVE)
                 .requiresVerification(true)
-                .emailVerificationToken(emailVerificationToken)  // ✅ Pass the generated token
+                .emailVerificationToken(emailVerificationToken)
                 .createdAt(LocalDateTime.now())
                 .build();
     }
@@ -82,7 +84,8 @@ public class AuthResAndSecDTOFactory {
             String accessToken,
             String message,
             UserDTO userDTO,
-            SecurityDataResponseDto securityDataResponseDto
+            SecurityDataResponseDto securityDataResponseDto,
+            LocalDateTime lastLogin
     ) {
         Objects.requireNonNull(accessToken, Validator.ACCESS_TOKEN_NON_NULL);
         Objects.requireNonNull(message, Validator.MESSAGE_NON_NULL);
@@ -90,11 +93,12 @@ public class AuthResAndSecDTOFactory {
         Objects.requireNonNull(securityDataResponseDto, Validator.SECURITY_DATA_NON_NULL);
 
         return new AuthResponseDTO.Builder(message)
-                .accessToken(accessToken)  // ✅ Add accessToken
+                .accessToken(accessToken)  // Add accessToken
                 .userDTO(userDTO)
                 .securityDataResponseDto(securityDataResponseDto)
-                .statusCode("PENDING_SECURITY")
+                .statusCode(Validator.ACTIVE)
                 .requiresVerification(false)
+                .lastLogin(lastLogin != null ? lastLogin : LocalDateTime.now())
                 .build();
     }
 

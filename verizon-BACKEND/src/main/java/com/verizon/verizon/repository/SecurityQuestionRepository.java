@@ -9,6 +9,7 @@ import java.util.Optional;
 @Repository
 public interface SecurityQuestionRepository extends JpaRepository<SecurityQuestion, Long> {
     Optional<SecurityQuestion> findByQuestionText(String question);
+    Optional<SecurityQuestion> findByName(String name);  // ← Add this
     boolean existsByQuestionText(String question);
 
 }

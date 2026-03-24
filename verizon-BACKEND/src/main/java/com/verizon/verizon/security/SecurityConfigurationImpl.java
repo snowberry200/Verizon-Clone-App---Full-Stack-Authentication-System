@@ -29,9 +29,17 @@ public class SecurityConfigurationImpl implements SecurityConfigurations {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) {
         try {
             return httpSecurity
-                    .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                    // Disable CSRF
                     .csrf(AbstractHttpConfigurer::disable)
+
+                    // Configure CORS
+                    .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                    // Configure authorization
                     .authorizeHttpRequests(auth -> auth
+                            // IMPORTANT: Allow OPTIONS requests for all endpoints
+                            .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
                             // PUBLIC ENDPOINTS - No authentication required
                             .requestMatchers(
                                     // Auth endpoints
@@ -39,8 +47,11 @@ public class SecurityConfigurationImpl implements SecurityConfigurations {
                                     "/api/auth/login",
                                     "/api/auth/register",
                                     "/api/auth/refresh",
+                                    "/api/auth/test",
+                                    "/api/auth/test-cors",
+                                    "/api/auth/test-post",
 
-                                    // User registration - MAKE THIS PUBLIC!
+                                    // User registration
                                     "/api/users/register",
                                     "/api/public/**",
                                     "/api/public/users",
@@ -70,39 +81,28 @@ public class SecurityConfigurationImpl implements SecurityConfigurations {
 
                             // PROTECTED ENDPOINTS - Need JWT token
                             .requestMatchers(
-                                    "/api/users/**",        // All user operations except register
-                                    "/api/users/profile",   // User profile
-                                    "/api/users/update",    // Update user
-                                    "/api/users/delete",    // Delete user
-                                    "/api/roles/**",        // Role management
-                                    "/api/admin/**"         // Admin only endpoints
+                                    "/api/users/**",
+                                    "/api/users/profile",
+                                    "/api/users/update",
+                                    "/api/users/delete",
+                                    "/api/roles/**",
+                                    "/api/admin/**"
                             ).authenticated()
 
-                            // Allow all other requests (for Flutter routing)
+                            // Allow all other requests
                             .anyRequest().permitAll()
                     )
+
+                    // Use stateless session
                     .sessionManagement(session -> session
                             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                     )
-                    .exceptionHandling(exception -> exception
-                            .authenticationEntryPoint((request, response, authException) -> {
-                                // Only return 401 for API calls, not for Flutter routes
-                                if (request.getRequestURI().startsWith("/api/")) {
-                                    response.setContentType("application/json");
-                                    response.setStatus(401);
-                                    response.getWriter().write(
-                                            "{\"error\": \"Unauthorized\", \"message\": \"Authentication required\"}"
-                                    );
-                                } else {
-                                    // For non-API routes, let it through (Flutter will handle)
-                                    response.setStatus(200);
-                                    // Serve index.html for Flutter routing
-                                    request.getRequestDispatcher("/").forward(request, response);
-                                }
-                            })
-                    )
+
+                    // Add JWT filter
                     .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
                     .build();
+
         } catch (Exception e) {
             throw new RuntimeException("Security configuration failed", e);
         }
@@ -118,33 +118,28 @@ public class SecurityConfigurationImpl implements SecurityConfigurations {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(
-                List.of(
-                        "http://localhost:3000",
-                        "http://localhost:8080",
-                        "http://localhost:5555",  // Flutter web default
-                        "http://127.0.0.1:5555",  // Flutter web alternative
-                        "http://localhost",        // Flutter web
-                        "http://127.0.0.1",
-                        "http://localhost:56818" // Flutter web alternative
-                ));
+
+        // Allow all origins (you can restrict this later)
+        configuration.setAllowedOrigins(List.of("*"));
+
+        // Allow all methods
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"
         ));
-        configuration.setAllowedHeaders(List.of(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "Origin",
-                "X-Requested-With",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"
-        ));
+
+        // Allow all headers
+        configuration.setAllowedHeaders(List.of("*"));
+
+        // Expose headers to browser
         configuration.setExposedHeaders(List.of(
                 "Authorization",
                 "Content-Type"
         ));
+
+        // Allow credentials
         configuration.setAllowCredentials(true);
+
+        // Cache preflight response for 1 hour
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

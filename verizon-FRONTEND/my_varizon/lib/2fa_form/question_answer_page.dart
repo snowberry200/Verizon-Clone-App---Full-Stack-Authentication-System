@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:my_verizon/question_widget.dart/main_question_answer_widget.dart';
+import 'package:my_verizon/2fa_form/question_widgets/main_question_answer_widget.dart';
 import 'package:my_verizon/widgets/sliver_appbar.dart';
 
 class QuestionPage extends StatefulWidget {

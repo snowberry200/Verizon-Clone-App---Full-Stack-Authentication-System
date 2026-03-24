@@ -1,5 +1,6 @@
 package com.verizon.verizon.dtos.entities_dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.verizon.verizon.entity.SecurityQuestion;
 import com.verizon.verizon.entity.UserSecurityQuestion;
 
@@ -12,6 +13,7 @@ public class UserSecurityQuestionDTO {
     private final Long id;
     private final String answer;
     private SecurityQuestionDTO securityQuestionDTO;
+    @JsonIgnore
     private List<UserDTO> userDTOS = new ArrayList<>();
 
     public UserSecurityQuestionDTO(Builder builder) {
@@ -20,19 +22,6 @@ public class UserSecurityQuestionDTO {
         this.securityQuestionDTO = builder.securityQuestionDTO;
         this.userDTOS = builder.userDTOS;
     }
-
-
-    //method to add single User
-    public void addSingleUserDTO(UserDTO userDTO) {
-        if (this.userDTOS == null) {
-            this.userDTOS = new ArrayList<>();
-        }
-        if (!this.userDTOS.contains(userDTO)) {
-            this.userDTOS.add(userDTO);
-            userDTO.setUserSecurityQuestionDTO(this);
-        }
-    }
-
 
     public static class Builder {
         private final Long id;

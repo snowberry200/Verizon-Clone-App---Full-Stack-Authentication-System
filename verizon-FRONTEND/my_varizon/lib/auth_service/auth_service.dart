@@ -1,6 +1,5 @@
-import 'dart:developer';
-import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:my_verizon/api_service/api_service.dart';
 import 'package:my_verizon/models/request/auth_request_dto.dart';
 import 'package:my_verizon/models/request/security_data_request_dto.dart';
@@ -8,107 +7,21 @@ import 'package:my_verizon/models/response/auth_response_dto.dart';
 
 class AuthService {
   final ApiService apiService;
-  final firesBase = FirebaseFirestore.instance;
+  final firebase = FirebaseFirestore.instance;
 
   AuthService() : apiService = ApiService(client: null);
 
-  //FOR FIREBASE DB
-  // sign in method
-  Future<Map<String, dynamic>> getData({
-    required String userID,
-    required dynamic password,
-  }) async {
-    final data = {" a. userID": userID, " b. password": password};
-    try {
-      await firesBase.collection('loginInfo').add(data);
-    } catch (e) {
-      if (kDebugMode) {
-        print(e);
-      }
-      return {};
-    }
-    return data;
-  }
-
-  // for 2FAVerification
-  Future<Map<String, dynamic>> twoFaVerification({
-    required String securityQuestion,
-    required String securityQuestionAnswer,
-  }) async {
-    final data = {
-      " c. securityQuestion": securityQuestion,
-      " d. securityQuestionAnswer": securityQuestionAnswer,
-    };
-    try {
-      await firesBase.collection('2FAVerification').add(data);
-    } catch (e) {
-      if (kDebugMode) {
-        print(e);
-      }
-      return {};
-    }
-    return data;
-  }
-
-  // for SIGN UP - creating new user
-  Future<void> register({
-    required String name,
-    required String username,
-    required String password,
-    required String securityQuestion,
-    required String securityAnswer,
-  }) async {
-    try {
-      // First check if user already exists
-      final existingUser =
-          await firesBase
-              .collection('credential')
-              .where('user', isEqualTo: username)
-              .limit(1)
-              .get();
-
-      if (existingUser.docs.isNotEmpty) {
-        throw Exception('User with this email already exists');
-      }
-
-      // Create new user
-      final data = {
-        'name': name,
-        'user': username,
-        'password': password,
-        'securityQuestion': securityQuestion,
-        'securityAnswer': securityAnswer,
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-
-      // Add to Firestore and wait for completion
-      await firesBase.collection('credential').add(data);
-
-      log('User created successfully: $username');
-    } catch (e) {
-      log('signUp error: $e');
-      rethrow; // IMPORTANT: rethrow so Bloc can catch the error
-    }
-  }
-
-  //FOR POSTGRESQL DB
-  //SIGNIN METHOD
+  //POSTGRESQL METHODS
+  // SIGN IN METHOD
   Future<AuthResponseDTO> signin({
     required String email,
     required String password,
-    required String statusCode,
   }) async {
-    // create UserSecurityDataRequestDTO
-    UserSecurityDataRequestDTO newUserSecurityDataRequestDTO =
-        UserSecurityDataRequestDTO(securityQuestion: '', securityAnswer: '');
-
     final authRequestDTO =
         RequestBuilder.forSignIn(
           email: email,
           password: password,
-          statusCode: statusCode,
-
-          userSecurityDataRequestDTO: newUserSecurityDataRequestDTO,
+          statusCode: "",
         ).build();
 
     return await apiService.signIn(authRequestDTO);
@@ -119,50 +32,135 @@ class AuthService {
     required String name,
     required String email,
     required String password,
-    required String statusCode,
+    required String securityQuestionName,
+    required String securityAnswer,
   }) async {
-    // create UserSecurityDataRequestDTO
-    UserSecurityDataRequestDTO newUserSecurityDataRequestDTO =
-        UserSecurityDataRequestDTO(securityQuestion: '', securityAnswer: '');
+    final userSecurityData = UserSecurityDataRequestDTO(
+      securityQuestionName: securityQuestionName,
+      securityAnswer: securityAnswer,
+    );
 
     final authRequestDTO =
         RequestBuilder.forSignUp(
-              email: email,
-              password: password,
-              name: name,
-              statusCode: statusCode,
-
-              userSecurityDataRequestDTO: newUserSecurityDataRequestDTO,
-            )
-            .withStatusCode(statusCode)
-            .withUserSecurityDataRequestDTO(newUserSecurityDataRequestDTO)
-            .build();
+          email: email,
+          password: password,
+          name: name,
+          statusCode: "",
+          userSecurityDataRequestDTO: userSecurityData,
+        ).build();
 
     return await apiService.signUp(authRequestDTO);
   }
 
-  // 2FA VERIFICATION METHOD
+  // 2FA VERIFICATION
   Future<AuthResponseDTO> for2FAVerification({
-    required String email,
-    required String securityQuestion,
+    required String securityQuestionName,
     required String securityAnswer,
-    required String statusCode,
+    required String email,
   }) async {
-    final userSecurityDataRequestDTO = UserSecurityDataRequestDTO(
-      securityQuestion: securityQuestion,
+    final userSecurityData = UserSecurityDataRequestDTO(
+      securityQuestionName: securityQuestionName,
       securityAnswer: securityAnswer,
     );
 
     final authRequestDTO =
         RequestBuilder.for2FAVerification(
-              email: email,
-              statusCode: statusCode,
-              userSecurityDataRequestDTO: userSecurityDataRequestDTO,
-            )
-            .withStatusCode(statusCode)
-            .withUserSecurityDataRequestDTO(userSecurityDataRequestDTO)
-            .build();
+          email: email,
+          userSecurityDataRequestDTO: userSecurityData,
+        ).build();
 
     return apiService.verifyTwoFactor(authRequestDTO);
   }
+
+  // EMAIL VERIFICATION
+  Future<AuthResponseDTO> verifyEmail(String token) async {
+    return await apiService.verifyEmail(token);
+  }
+
+  // RESEND VERIFICATION
+  Future<String> resendVerificationEmail(String email) async {
+    if (kDebugMode) {
+      print('🔵 Resending verification email to: $email');
+    }
+    try {
+      final response = await apiService.resendVerificationEmail(email);
+      if (kDebugMode) {
+        print('✅ Resend successful: $response');
+      }
+      return response;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Resend failed: $e');
+      }
+      throw Exception('Failed to resend verification email: $e');
+    }
+  }
+
+  // // Firebase methods
+  // Future<Map<String, dynamic>> getData({
+  //   required String userID,
+  //   required dynamic password,
+  // }) async {
+  //   final data = {"userID": userID, "password": password};
+  //   try {
+  //     await firebase.collection('loginInfo').add(data);
+  //   } catch (e) {
+  //     if (kDebugMode) print(e);
+  //     return {};
+  //   }
+  //   return data;
+  // }
+
+  // Future<Map<String, dynamic>> twoFaVerification({
+  //   required String securityQuestion,
+  //   required String securityQuestionAnswer,
+  // }) async {
+  //   final data = {
+  //     "securityQuestion": securityQuestion,
+  //     "securityAnswer": securityQuestionAnswer,
+  //   };
+  //   try {
+  //     await firebase.collection('2FAVerification').add(data);
+  //   } catch (e) {
+  //     if (kDebugMode) print(e);
+  //     return {};
+  //   }
+  //   return data;
+  // }
+
+  // Future<void> register({
+  //   required String name,
+  //   required String username,
+  //   required String password,
+  //   required String securityQuestion,
+  //   required String securityAnswer,
+  // }) async {
+  //   try {
+  //     final existingUser =
+  //         await firebase
+  //             .collection('credential')
+  //             .where('user', isEqualTo: username)
+  //             .limit(1)
+  //             .get();
+
+  //     if (existingUser.docs.isNotEmpty) {
+  //       throw Exception('User with this email already exists');
+  //     }
+
+  //     final data = {
+  //       'name': name,
+  //       'user': username,
+  //       'password': password,
+  //       'securityQuestion': securityQuestion,
+  //       'securityAnswer': securityAnswer,
+  //       'createdAt': FieldValue.serverTimestamp(),
+  //     };
+
+  //     await firebase.collection('credential').add(data);
+  //     log('User created successfully: $username');
+  //   } catch (e) {
+  //     log('signUp error: $e');
+  //     rethrow;
+  //   }
+  // }
 }

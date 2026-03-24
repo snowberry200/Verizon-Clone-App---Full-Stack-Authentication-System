@@ -1,5 +1,5 @@
 package com.verizon.verizon.dtos.entities_dto;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.verizon.verizon.entity.Roles;
 import com.verizon.verizon.entity.User;
 import com.verizon.verizon.entity.UserSecurityQuestion;
@@ -16,12 +16,13 @@ public class UserDTO {
     private final String statusCode;
     private final LocalDateTime createdAt;
     private final LocalDateTime lastLogin;
+    @JsonIgnore
     public List<RolesDTO> rolesDTOS;
     private String accessToken;
     private final String verificationToken;
     private LocalDateTime verificationTokenExpiry;
     private LocalDateTime verifiedAt;
-
+    @JsonIgnore
     private UserSecurityQuestionDTO userSecurityQuestionDTO;
 
     public UserDTO(Builder builder) {
@@ -47,7 +48,7 @@ public class UserDTO {
         }
         if (!this.rolesDTOS.contains(rolesDTO)) {
             this.rolesDTOS.add(rolesDTO);
-            rolesDTO.addSingleUserDTO(this); // ← Maintain the OTHER side!
+           // rolesDTO.addSingleUserDTO(this); // ← Maintain the OTHER side!
         }
     }
 
@@ -204,14 +205,14 @@ public class UserDTO {
             List<Roles> roles = user.getRoles();
             roles.stream().map(role -> {
                 RolesDTO rolesDTO = RolesDTO.convertRolesToDTO(role);
-                newUserDTO.addSingleRoleDTO(rolesDTO);//<- maintaining bi-directional relation
-                rolesDTO.addSingleUserDTO(newUserDTO);
+                newUserDTO.addSingleRoleDTO(rolesDTO);
                 return newUserDTO;
             }).collect(Collectors.toList());
         } else {
             newUserDTO.setRolesDTOS(new ArrayList<>());
 
         }
+        //validate newUserSecurityQuestion
         if (user.getUserSecurityQuestion() != null) {
             UserSecurityQuestion newUserSecurityQuestion = user.getUserSecurityQuestion();
             UserSecurityQuestionDTO newUserSecurityQuestionDTO = UserSecurityQuestionDTO.convertUserSecurityQuestionDTO(newUserSecurityQuestion);

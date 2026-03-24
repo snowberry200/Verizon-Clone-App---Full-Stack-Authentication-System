@@ -1,9 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:my_verizon/2fa_form/question_widgets/question_model.dart';
 
 class SecurityQuestionFormField extends StatefulWidget {
-  final List<String> items;
-  final Function(String) onQuestionSelected;
+  final List<SecurityQuestion> items;
+  final Function(SecurityQuestion) onQuestionSelected;
 
   const SecurityQuestionFormField({
     super.key,
@@ -17,7 +18,7 @@ class SecurityQuestionFormField extends StatefulWidget {
 }
 
 class SecurityQuestionFormFieldState extends State<SecurityQuestionFormField> {
-  String selectedValue = '';
+  SecurityQuestion? selectedValue;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +32,7 @@ class SecurityQuestionFormFieldState extends State<SecurityQuestionFormField> {
           ),
         ),
         SizedBox(
-          child: DropdownButtonFormField<String>(
+          child: DropdownButtonFormField<SecurityQuestion>(
             isDense: true,
             isExpanded: true,
             alignment: AlignmentDirectional.centerStart,
@@ -68,7 +69,7 @@ class SecurityQuestionFormFieldState extends State<SecurityQuestionFormField> {
             ),
             focusColor: CupertinoColors.systemBlue,
             dropdownColor: CupertinoColors.white,
-            initialValue: selectedValue.isNotEmpty ? selectedValue : null,
+            initialValue: selectedValue,
             items:
                 widget.items
                     .map(
@@ -76,7 +77,7 @@ class SecurityQuestionFormFieldState extends State<SecurityQuestionFormField> {
                         alignment: AlignmentDirectional.centerStart,
                         value: item,
                         child: Text(
-                          item,
+                          item.text,
                           style: const TextStyle(
                             color: CupertinoColors.black,
                             fontSize: 12,
@@ -86,7 +87,7 @@ class SecurityQuestionFormFieldState extends State<SecurityQuestionFormField> {
                     )
                     .toList(),
             icon: const Icon(Icons.arrow_drop_down),
-            onChanged: (String? newValue) {
+            onChanged: (SecurityQuestion? newValue) {
               if (newValue != null && mounted) {
                 setState(() {
                   selectedValue = newValue;
@@ -95,7 +96,7 @@ class SecurityQuestionFormFieldState extends State<SecurityQuestionFormField> {
               }
             },
             validator: (value) {
-              if (value == null || value.isEmpty) {
+              if (value == null) {
                 return 'Please select a security question';
               }
               return null;

@@ -6,16 +6,21 @@ import jakarta.annotation.Nullable;
 import java.time.LocalDateTime;
 
 public class AuthResponseDTO {
-    private final UserDTO userDTO;
-    private final String accessToken;
-    private final String message;
-    private final String statusCode;
-    private final boolean requiresVerification;
-    private final String emailVerificationToken;
-    private final SecurityDataResponseDto securityDataResponseDto;
-    private final LocalDateTime createdAt;
-    private final LocalDateTime lastLogin;
-    private final LocalDateTime verifiedAt;
+    private  UserDTO userDTO;
+    private  String accessToken;
+    private  String message;
+    private  String statusCode;
+    private  boolean requiresVerification;
+    private  String emailVerificationToken;
+    private  SecurityDataResponseDto securityDataResponseDto;
+    private  LocalDateTime createdAt;
+    private  LocalDateTime lastLogin;
+    private  LocalDateTime verifiedAt;
+
+    // Default Constructor
+    public AuthResponseDTO(){
+        //for Jackson
+    }
 
     public AuthResponseDTO(Builder builder) {
         this.userDTO = builder.userDTO;
@@ -30,26 +35,6 @@ public class AuthResponseDTO {
         this.verifiedAt = builder.verifiedAt;
     }
 
-    // Getters
-    public String getStatusCode() {
-        return statusCode;
-    }
-
-    public UserDTO getUserDTO() {
-        return userDTO;
-    }
-
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public SecurityDataResponseDto getSecurityDataResponseDto() {
-        return securityDataResponseDto;
-    }
 
     @Nullable
     public LocalDateTime getLastLogin() {
@@ -72,6 +57,7 @@ public class AuthResponseDTO {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
 
     public static class Builder {
         // Required - always present
@@ -177,5 +163,64 @@ public class AuthResponseDTO {
 
             return new AuthResponseDTO(this);
         }
+    }
+    // Getters
+    public String getStatusCode() {
+        return statusCode;
+    }
+
+    public UserDTO getUserDTO() {
+        return userDTO;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public SecurityDataResponseDto getSecurityDataResponseDto() {
+        return securityDataResponseDto;
+    }
+    public void setUserDTO(UserDTO userDTO) {
+        this.userDTO = userDTO;
+    }
+
+    public void setVerifiedAt(LocalDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public void setLastLogin(LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setSecurityDataResponseDto(SecurityDataResponseDto securityDataResponseDto) {
+        this.securityDataResponseDto = securityDataResponseDto;
+    }
+
+    public void setEmailVerificationToken(String emailVerificationToken) {
+        this.emailVerificationToken = emailVerificationToken;
+    }
+
+    public void setRequiresVerification(boolean requiresVerification) {
+        this.requiresVerification = requiresVerification;
+    }
+
+    public void setStatusCode(String statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
     }
 }

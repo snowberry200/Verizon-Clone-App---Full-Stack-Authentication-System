@@ -1,81 +1,80 @@
-import 'package:my_verizon/models/entity_dtos/user_security_question_dto.dart';
-
+// models/entity_dtos/user_dto.dart
 class UserDTO {
   final int id;
-  final String name;
   final String email;
+  final String name;
   final String statusCode;
-  final String? role;
-  final String verificationToken;
-  final DateTime verificationTokenExpiry;
-  final DateTime verifiedAt;
-  final UserSecurityQuestionDTO userSecurityQuestionDTO;
-  final String accessToken;
   final DateTime? createdAt;
   final DateTime? lastLogin;
+  final DateTime? verifiedAt;
+  final String? accessToken;
+  final String? verificationToken;
+  final DateTime? verificationTokenExpiry;
 
   UserDTO({
     required this.id,
-    required this.name,
     required this.email,
-    required this.role,
+    required this.name,
+    required this.statusCode,
     this.createdAt,
     this.lastLogin,
-    required this.userSecurityQuestionDTO,
-    required this.accessToken,
-    required this.statusCode,
-    required this.verificationToken,
-    required this.verificationTokenExpiry,
-    required this.verifiedAt,
+    this.verifiedAt,
+    this.accessToken,
+    this.verificationToken,
+    this.verificationTokenExpiry,
   });
 
-  // Factory method for creating a UserDTO from JSON
+  factory UserDTO.empty() {
+    return UserDTO(
+      id: 0,
+      email: '',
+      name: '',
+      statusCode: '',
+      createdAt: null,
+      lastLogin: null,
+      verifiedAt: null,
+      accessToken: null,
+      verificationToken: null,
+      verificationTokenExpiry: null,
+    );
+  }
+
   factory UserDTO.fromJson(Map<String, dynamic> json) {
     return UserDTO(
       id: json['id'],
-      name: json['name'],
-      email: json['email'],
-      role: json['role'],
+      email: json['email'] ?? '',
+      name: json['name'] ?? '',
+      statusCode: json['statusCode'] ?? '',
       createdAt:
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       lastLogin:
           json['lastLogin'] != null ? DateTime.parse(json['lastLogin']) : null,
-      userSecurityQuestionDTO: UserSecurityQuestionDTO.fromJson(
-        json['userSecurityQuestion'],
-      ),
-      accessToken: json['accessToken'] ?? '',
-      statusCode: json['statusCode'] ?? '',
+      verifiedAt:
+          json['verifiedAt'] != null
+              ? DateTime.parse(json['verifiedAt'])
+              : null,
+      accessToken: json['accessToken'],
       verificationToken: json['verificationToken'],
       verificationTokenExpiry:
           json['verificationTokenExpiry'] != null
               ? DateTime.parse(json['verificationTokenExpiry'])
-              : DateTime.now(), // or handle null appropriately
-      verifiedAt:
-          json['verifiedAt'] != null
-              ? DateTime.parse(json['verifiedAt'])
-              : DateTime.now(), // or handle null appropriately
+              : null,
     );
   }
 
-  // Method for TO JSON (serialization)
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {};
-    data['id'] = id;
-    data['name'] = name;
-    data['email'] = email;
-    data['statusCode'] = statusCode;
-    data['role'] = role;
-    if (createdAt != null) {
-      data['createdAt'] = createdAt!.toIso8601String();
-    }
-    if (lastLogin != null) {
-      data['lastLogin'] = lastLogin!.toIso8601String();
-    }
-    data['userSecurityQuestion'] = userSecurityQuestionDTO.toJson();
-    data['verificationToken'] = verificationToken;
-    data['verificationTokenExpiry'] = verificationTokenExpiry.toIso8601String();
-    data['verifiedAt'] = verifiedAt.toIso8601String();
-    data['accessToken'] = accessToken;
-    return data;
+    return {
+      'id': id,
+      'email': email,
+      'name': name,
+      'statusCode': statusCode,
+      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      if (lastLogin != null) 'lastLogin': lastLogin!.toIso8601String(),
+      if (verifiedAt != null) 'verifiedAt': verifiedAt!.toIso8601String(),
+      if (accessToken != null) 'accessToken': accessToken,
+      if (verificationToken != null) 'verificationToken': verificationToken,
+      if (verificationTokenExpiry != null)
+        'verificationTokenExpiry': verificationTokenExpiry!.toIso8601String(),
+    };
   }
 }

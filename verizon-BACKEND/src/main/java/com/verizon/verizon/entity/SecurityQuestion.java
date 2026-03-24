@@ -3,7 +3,7 @@ package com.verizon.verizon.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name="securityQuestion")
+@Table(name="security_question")
 public class SecurityQuestion{
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
