@@ -2,9 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:my_verizon/auth_service/auth_service.dart';
 import 'package:my_verizon/layout/layout.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AnswerFormFieldWidget extends StatefulWidget {
   final String userId;
@@ -28,9 +29,7 @@ class _AnswerFormFieldWidgetState extends State<AnswerFormFieldWidget> {
   final GlobalKey<FormState> _answerKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  final Uri _verizonUrl = Uri.parse(
-    "https://secure.verizon.com/signin?_gl=1*1m3cwkt*_ga*MTU5NzA1NTY1MS4xNzQ1NzU0NzE2*_ga_12R1DX1LX7*MTc0NTc1NDcxNS4xLjEuMTc0NTc1NDcxNS42MC4wLjA.",
-  );
+  final String _verizonUrl = "https://secure.verizon.com/signin";
 
   @override
   void dispose() {
@@ -39,7 +38,6 @@ class _AnswerFormFieldWidgetState extends State<AnswerFormFieldWidget> {
   }
 
   Future<void> _handleVerificationAndRedirect() async {
-    // First validate the form
     if (!_answerKey.currentState!.validate()) {
       return;
     }
@@ -48,14 +46,7 @@ class _AnswerFormFieldWidgetState extends State<AnswerFormFieldWidget> {
       _isLoading = true;
     });
 
-    if (kDebugMode) {
-      print('🔐 Verifying security answer...');
-      print('   Question: ${widget.securityQuestion}');
-      print('   Answer: ${widget.securityQuestionAnswer.text}');
-    }
-
     try {
-      // Verifying with your backend
       final result = await AuthService().for2FAVerification(
         securityQuestionName: widget.securityQuestion,
         securityAnswer: widget.securityQuestionAnswer.text,
@@ -67,29 +58,39 @@ class _AnswerFormFieldWidgetState extends State<AnswerFormFieldWidget> {
         print('   Access token: ${result.accessToken?.substring(0, 20)}...');
       }
 
-      //  If verification successful, open the Verizon link
-      if (await canLaunchUrl(_verizonUrl)) {
-        await launchUrl(_verizonUrl);
+      //  Redirect to Verizon website
+      if (kIsWeb) {
+        // For web: redirect in same tab using universal_html
+        html.window.location.href = _verizonUrl;
       } else {
-        throw Exception('Could not launch URL');
+        // For mobile: open in browser
+        final Uri url = Uri.parse(_verizonUrl);
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url);
+        } else {
+          throw Exception('Could not launch URL');
+        }
       }
     } catch (e) {
       if (kDebugMode) {
         print('❌ Verification failed: $e');
       }
 
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Verification failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Verification failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
