@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "554470271872",
+    "project_id": "verizon-usa",
+    "storage_bucket": "verizon-usa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:554470271872:android:8b3006de444af85d5caf65",
+        "android_client_info": {
+          "package_name": "com.example.my_verizon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtwIJLhg5i-tu40yVCW25o38YqVBDe_ZE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
